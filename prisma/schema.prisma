@@ -1,0 +1,226 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  username     String   @unique
+  displayName  String
+  passwordHash String
+  role         String   @default("ARTIST")
+  phone        String?
+  profileImage String?
+  banner       String?
+  bio          String?
+  genres       String?
+  instagram    String?
+  youtube      String?
+  spotify      String?
+  otherLinks   String?
+  legalName    String?
+  verified     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  beats          Beat[]
+  receivedOrders Order[]        @relation("ProducerOrders")
+  orders         Order[]        @relation("ArtistOrders")
+  favorites      Favorite[]
+  following      Follow[]       @relation("Follower")
+  followers      Follow[]       @relation("Following")
+  sentMessages   Message[]      @relation("Sender")
+  receivedMsgs   Message[]      @relation("Receiver")
+  convos1        Conversation[] @relation("Participant1")
+  convos2        Conversation[] @relation("Participant2")
+}
+
+model Beat {
+  id           String   @id @default(cuid())
+  title        String
+  slug         String
+  coverArt     String?
+  masterUrl    String?
+  mp3Url       String?
+  stemsUrl     String?
+  previewUrl   String?
+  waveformData String?
+  genre        String
+  mood         String?
+  bpm          Int?
+  musicalKey   String?
+  tags         String?
+  description  String?
+  status       String   @default("DRAFT")
+  plays        Int      @default(0)
+
+  producerId String
+  producer   User   @relation(fields: [producerId], references: [id])
+
+  licensePlans LicensePlan[]
+  favorites    Favorite[]
+  orders       Order[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model LicensePlan {
+  id             String  @id @default(cuid())
+  type           String
+  price          Float
+  currency       String  @default("INR")
+  includesMp3    Boolean @default(true)
+  includesWav    Boolean @default(false)
+  includesStems  Boolean @default(false)
+  streamingLimit String?
+  videoLimit     String?
+  isExclusive    Boolean @default(false)
+  active         Boolean @default(true)
+
+  beatId String
+  beat   Beat   @relation(fields: [beatId], references: [id], onDelete: Cascade)
+
+  orders Order[]
+
+  createdAt DateTime @default(now())
+}
+
+model Favorite {
+  id     String @id @default(cuid())
+  userId String
+  beatId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  beat   Beat   @relation(fields: [beatId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, beatId])
+}
+
+model Follow {
+  id          String @id @default(cuid())
+  followerId  String
+  followingId String
+  follower    User   @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User   @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([followerId, followingId])
+}
+
+model Order {
+  id             String @id @default(cuid())
+  status         String @default("PENDING")
+  totalAmount    Float
+  commission     Float
+  producerAmount Float
+  currency       String @default("INR")
+
+  artistId      String
+  artist        User        @relation("ArtistOrders", fields: [artistId], references: [id])
+  producerId    String
+  producer      User        @relation("ProducerOrders", fields: [producerId], references: [id])
+  beatId        String
+  beat          Beat        @relation(fields: [beatId], references: [id])
+  licensePlanId String
+  licensePlan   LicensePlan @relation(fields: [licensePlanId], references: [id])
+
+  agreement   Agreement?
+  payment     Payment?
+  entitlement Entitlement?
+  downloads   Download[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Agreement {
+  id                String    @id @default(cuid())
+  templateVersion   String
+  content           String
+  contentHash       String
+  artistLegalName   String
+  producerLegalName String
+  acceptedAt        DateTime?
+  signatureData     String?
+
+  orderId String @unique
+  order   Order  @relation(fields: [orderId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model Payment {
+  id          String  @id @default(cuid())
+  status      String  @default("PENDING")
+  amount      Float
+  currency    String  @default("INR")
+  method      String?
+  providerRef String?
+
+  orderId String @unique
+  order   Order  @relation(fields: [orderId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Entitlement {
+  id     String  @id @default(cuid())
+  active Boolean @default(true)
+
+  orderId String @unique
+  order   Order  @relation(fields: [orderId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model Download {
+  id       String @id @default(cuid())
+  fileType String
+
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model Conversation {
+  id             String @id @default(cuid())
+  participant1Id String
+  participant2Id String
+  beatContextId  String?
+
+  participant1 User @relation("Participant1", fields: [participant1Id], references: [id])
+  participant2 User @relation("Participant2", fields: [participant2Id], references: [id])
+
+  messages Message[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([participant1Id, participant2Id])
+}
+
+model Message {
+  id      String  @id @default(cuid())
+  content String
+  read    Boolean @default(false)
+
+  senderId   String
+  receiverId String
+  sender     User @relation("Sender", fields: [senderId], references: [id])
+  receiver   User @relation("Receiver", fields: [receiverId], references: [id])
+
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+
+  createdAt DateTime @default(now())
+}

@@ -1,0 +1,92 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@layer base {
+  :root {
+    --bg-primary: 0 0% 0%;
+    --bg-secondary: 0 0% 7%;
+    --bg-elevated: 0 0% 11%;
+    --bg-highlight: 0 0% 14%;
+    --text-primary: 0 0% 100%;
+    --text-secondary: 0 0% 70%;
+    --text-muted: 0 0% 45%;
+    --border-subtle: 0 0% 12%;
+    --border-default: 0 0% 18%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-[hsl(var(--border-subtle))];
+  }
+  body {
+    @apply bg-black text-white antialiased;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  a { @apply transition-colors duration-150; }
+  button { @apply transition-all duration-150; }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60;
+  }
+  .surface {
+    @apply bg-[hsl(var(--bg-secondary))] border border-[hsl(var(--border-subtle))];
+  }
+  .surface-elevated {
+    @apply bg-[hsl(var(--bg-elevated))];
+  }
+  .surface-highlight {
+    @apply bg-[hsl(var(--bg-highlight))];
+  }
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: hsla(0, 0%, 100%, 0.12);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsla(0, 0%, 100%, 0.2);
+}
+
+input[type="range"] {
+  -webkit-appearance: none;
+  height: 4px;
+  border-radius: 2px;
+  background: hsla(0, 0%, 100%, 0.15);
+  outline: none;
+  transition: background 0.15s;
+}
+input[type="range"]:hover {
+  background: hsla(0, 0%, 100%, 0.25);
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #fff;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+input[type="range"]:hover::-webkit-slider-thumb {
+  opacity: 1;
+}
+
+::selection {
+  background: hsla(0, 0%, 100%, 0.15);
+}
