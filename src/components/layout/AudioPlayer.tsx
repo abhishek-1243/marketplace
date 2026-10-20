@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Play,
   Pause,
@@ -12,10 +12,10 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useAudioPlayer } from "@/store/audio-player";
-import { formatPrice } from "@/lib/utils";
 
 export default function AudioPlayer() {
   const audioRef = useRef<HTMLAudioElement>(null);
+  const [playbackError, setPlaybackError] = useState("");
   const {
     currentTrack,
     isPlaying,
@@ -23,6 +23,7 @@ export default function AudioPlayer() {
     duration,
     volume,
     toggle,
+    pause,
     setProgress,
     setDuration,
     setVolume,
@@ -33,26 +34,22 @@ export default function AudioPlayer() {
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
-
-    if (isPlaying) {
-      audio.play().catch(() => {});
-    } else {
-      audio.pause();
-    }
-  }, [isPlaying, currentTrack]);
-
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
     if (currentTrack?.previewUrl) {
-      audio.src = currentTrack.previewUrl;
-      audio.load();
-      if (isPlaying) {
-        audio.play().catch(() => {});
+      const nextSource = new URL(currentTrack.previewUrl, window.location.href).href;
+      if (audio.src !== nextSource) {
+        setPlaybackError("");
+        audio.src = nextSource;
+        audio.load();
       }
     }
-  }, [currentTrack?.id]);
+    if (isPlaying) audio.play().catch((error) => {
+      if (error?.name !== "AbortError") {
+        pause();
+        setPlaybackError("Preview unavailable. Try playing again.");
+      }
+    });
+    else audio.pause();
+  }, [currentTrack?.previewUrl, isPlaying, pause]);
 
   useEffect(() => {
     if (audioRef.current) {
@@ -75,6 +72,7 @@ export default function AudioPlayer() {
     <>
       <audio
         ref={audioRef}
+        preload="none"
         onTimeUpdate={() =>
           setProgress(audioRef.current?.currentTime || 0)
         }
@@ -82,11 +80,13 @@ export default function AudioPlayer() {
           setDuration(audioRef.current?.duration || 0)
         }
         onEnded={next}
+        onError={() => { pause(); setPlaybackError("Preview unavailable. Please try again later."); }}
       />
       <div className="fixed bottom-0 left-0 right-0 z-50 bg-zinc-950 border-t border-white/[0.06]">
+        {playbackError && <p role="status" className="px-4 pt-2 text-center text-xs text-amber-200">{playbackError}</p>}
         <div className="max-w-[1400px] mx-auto px-4">
           <div className="flex items-center h-[72px] gap-4">
-            <div className="flex items-center gap-3 w-[240px] shrink-0">
+            <div className="flex items-center gap-3 w-[110px] sm:w-[240px] shrink-0">
               <div className="w-14 h-14 rounded-md bg-zinc-800 overflow-hidden shrink-0">
                 {currentTrack.coverArt && (
                   <img
@@ -109,16 +109,18 @@ export default function AudioPlayer() {
               </div>
             </div>
 
-            <div className="flex-1 flex flex-col items-center gap-1.5 max-w-[600px] mx-auto">
+            <div className="min-w-0 flex-1 flex flex-col items-center gap-1.5 max-w-[600px] mx-auto">
               <div className="flex items-center gap-5">
                 <button
                   onClick={previous}
+                  aria-label="Previous sound"
                   className="p-1 text-zinc-400 hover:text-white"
                 >
                   <SkipBack className="w-4 h-4" />
                 </button>
                 <button
                   onClick={toggle}
+                  aria-label={isPlaying ? "Pause preview" : "Play preview"}
                   className="w-8 h-8 rounded-full bg-white flex items-center justify-center hover:scale-105"
                 >
                   {isPlaying ? (
@@ -129,6 +131,7 @@ export default function AudioPlayer() {
                 </button>
                 <button
                   onClick={next}
+                  aria-label="Next sound"
                   className="p-1 text-zinc-400 hover:text-white"
                 >
                   <SkipForward className="w-4 h-4" />
@@ -140,6 +143,7 @@ export default function AudioPlayer() {
                 </span>
                 <input
                   type="range"
+                  aria-label="Playback position"
                   min={0}
                   max={duration || 100}
                   value={progress}
@@ -148,7 +152,7 @@ export default function AudioPlayer() {
                     setProgress(val);
                     if (audioRef.current) audioRef.current.currentTime = val;
                   }}
-                  className="flex-1 h-1 cursor-pointer"
+                  className="min-w-0 flex-1 h-1 cursor-pointer"
                 />
                 <span className="text-[11px] text-zinc-500 w-10 tabular-nums select-none">
                   {formatTime(duration)}
@@ -158,20 +162,22 @@ export default function AudioPlayer() {
 
             <div className="hidden sm:flex items-center gap-3 w-[240px] justify-end">
               <Link
-                href={`/checkout/${currentTrack.beatId}`}
-                className="px-4 py-1.5 bg-white text-black rounded-full text-[11px] font-semibold hover:scale-[1.02] whitespace-nowrap"
+                href={`/sounds/${currentTrack.beatId}`}
+                className="px-4 py-1.5 bg-amber-300 text-black rounded-full text-[11px] font-semibold hover:bg-amber-200 whitespace-nowrap"
               >
-                License {formatPrice(currentTrack.price)}
+                View sound
               </Link>
               <div className="flex items-center gap-1.5 group">
                 <button
                   onClick={() => setVolume(volume === 0 ? 0.8 : 0)}
+                  aria-label={volume === 0 ? "Unmute" : "Mute"}
                   className="p-1 text-zinc-400 hover:text-white"
                 >
                   <VolumeIcon className="w-4 h-4" />
                 </button>
                 <input
                   type="range"
+                  aria-label="Volume"
                   min={0}
                   max={1}
                   step={0.01}

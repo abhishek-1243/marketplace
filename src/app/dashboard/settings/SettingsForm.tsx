@@ -12,7 +12,7 @@ interface UserData {
   username: string;
   email: string;
   bio: string | null;
-  genres: string | null;
+  genres: string[] | null;
   profileImage: string | null;
   banner: string | null;
   instagram: string | null;
@@ -35,7 +35,7 @@ export default function SettingsForm({ user }: { user: UserData }) {
   const profileInputRef = useRef<HTMLInputElement>(null);
   const bannerInputRef = useRef<HTMLInputElement>(null);
 
-  const parsedGenres: string[] = user.genres ? JSON.parse(user.genres) : [];
+  const parsedGenres = Array.isArray(user.genres) ? user.genres : [];
 
   const [form, setForm] = useState({
     displayName: user.displayName,
@@ -64,7 +64,7 @@ export default function SettingsForm({ user }: { user: UserData }) {
     const setUploading = field === "profileImage" ? setUploadingProfile : setUploadingBanner;
 
     if (!file.type.startsWith("image/")) {
-      setError("Please select an image file (JPG, PNG, WebP, GIF)");
+      setError("Please select an image file (JPG, PNG or WebP)");
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
@@ -127,7 +127,7 @@ export default function SettingsForm({ user }: { user: UserData }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
-          genres: JSON.stringify(form.genres),
+          genres: form.genres,
         }),
       });
 
@@ -158,14 +158,14 @@ export default function SettingsForm({ user }: { user: UserData }) {
         <input
           ref={profileInputRef}
           type="file"
-          accept="image/jpeg,image/png,image/webp,image/gif"
+          accept="image/jpeg,image/png,image/webp"
           className="hidden"
           onChange={(e) => handleFileSelect(e, "profileImage")}
         />
         <input
           ref={bannerInputRef}
           type="file"
-          accept="image/jpeg,image/png,image/webp,image/gif"
+          accept="image/jpeg,image/png,image/webp"
           className="hidden"
           onChange={(e) => handleFileSelect(e, "banner")}
         />
@@ -253,7 +253,7 @@ export default function SettingsForm({ user }: { user: UserData }) {
           </div>
         </div>
 
-        <p className="text-[11px] text-zinc-600">JPG, PNG, WebP or GIF. Max 5MB. Click, drag and drop, or paste.</p>
+        <p className="text-[11px] text-zinc-600">JPG, PNG or WebP. Max 5MB. Click or drag and drop.</p>
       </div>
 
       <div className="space-y-3">

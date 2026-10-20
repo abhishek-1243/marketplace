@@ -42,7 +42,7 @@ export const useAudioPlayer = create<AudioPlayerState>((set, get) => ({
   queueIndex: 0,
 
   setTrack: (track) =>
-    set({ currentTrack: track, isPlaying: true, progress: 0, duration: 0 }),
+    set({ currentTrack: track, queue: [track], queueIndex: 0, isPlaying: true, progress: 0, duration: 0 }),
 
   play: () => set({ isPlaying: true }),
   pause: () => set({ isPlaying: false }),
@@ -60,7 +60,10 @@ export const useAudioPlayer = create<AudioPlayerState>((set, get) => ({
         queueIndex: nextIndex,
         isPlaying: true,
         progress: 0,
+        duration: 0,
       });
+    } else {
+      set({ isPlaying: false });
     }
   },
 
@@ -73,6 +76,7 @@ export const useAudioPlayer = create<AudioPlayerState>((set, get) => ({
         queueIndex: prevIndex,
         isPlaying: true,
         progress: 0,
+        duration: 0,
       });
     }
   },
@@ -84,5 +88,6 @@ export const useAudioPlayer = create<AudioPlayerState>((set, get) => ({
       currentTrack: tracks[startIndex],
       isPlaying: true,
       progress: 0,
+      duration: 0,
     }),
 }));

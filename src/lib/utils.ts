@@ -26,15 +26,20 @@ export function slugify(text: string): string {
     .replace(/[^\w\s-]/g, "")
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-")
-    .trim();
+    .replace(/^-|-$/g, "");
 }
 
-export function calculateCommission(amount: number): {
+export function calculateCommission(
+  amount: number,
+  rateBps = Number(process.env.PLATFORM_COMMISSION_BPS || 1000),
+  maxCommission = Number(process.env.PLATFORM_COMMISSION_CAP_INR || 5000),
+): {
   commission: number;
   producerAmount: number;
 } {
-  const rate = 0.1;
-  const maxCommission = 5000;
-  const commission = Math.min(amount * rate, maxCommission);
+  if (!Number.isInteger(amount) || amount < 0) {
+    throw new Error("Amount must be a non-negative integer");
+  }
+  const commission = Math.min(Math.round((amount * rateBps) / 10_000), maxCommission);
   return { commission, producerAmount: amount - commission };
 }

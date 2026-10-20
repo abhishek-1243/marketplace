@@ -15,6 +15,7 @@
     --text-muted: 0 0% 45%;
     --border-subtle: 0 0% 12%;
     --border-default: 0 0% 18%;
+    --fuel: 42 96% 56%;
   }
 }
 
@@ -30,6 +31,7 @@
   }
   a { @apply transition-colors duration-150; }
   button { @apply transition-all duration-150; }
+  :focus-visible { @apply outline-none ring-2 ring-amber-300 ring-offset-2 ring-offset-black; }
 }
 
 @layer utilities {
@@ -44,6 +46,15 @@
   }
   .surface-highlight {
     @apply bg-[hsl(var(--bg-highlight))];
+  }
+  .soundfuel-button {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-amber-300 px-5 py-3 text-sm font-bold text-black hover:bg-amber-200 disabled:pointer-events-none disabled:opacity-50;
+  }
+  .soundfuel-button-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-white/15 bg-white/[0.04] px-5 py-3 text-sm font-semibold text-white hover:border-amber-300/50 hover:bg-amber-300/10;
+  }
+  .soundfuel-input {
+    @apply w-full rounded-lg border border-white/10 bg-white/[0.05] px-4 py-3 text-sm text-white placeholder:text-zinc-600 hover:bg-white/[0.07] focus:border-amber-300/60 focus:outline-none;
   }
 }
 
@@ -88,5 +99,5 @@ input[type="range"]:hover::-webkit-slider-thumb {
 }
 
 ::selection {
-  background: hsla(0, 0%, 100%, 0.15);
+  background: hsla(42, 96%, 56%, 0.28);
 }

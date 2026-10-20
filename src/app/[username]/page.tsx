@@ -5,30 +5,33 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import StorefrontBeats from "./StorefrontBeats";
 import StorefrontActions from "./StorefrontActions";
+import { catalogSelect, publicCatalogWhere, serializeCatalogItem } from "@/lib/catalog";
+
+export const dynamic = "force-dynamic";
 
 export default async function ProducerStorefront({
   params,
 }: {
-  params: { username: string };
+  params: Promise<{ username: string }>;
 }) {
+  const { username } = await params;
   const producer = await prisma.user.findUnique({
-    where: { username: params.username },
+    where: { username },
     include: {
       beats: {
-        where: { status: "PUBLISHED" },
-        include: {
-          licensePlans: { where: { active: true }, select: { price: true, type: true } },
-        },
-        orderBy: { plays: "desc" },
+        where: publicCatalogWhere,
+        select: catalogSelect,
+        orderBy: { createdAt: "desc" },
+        take: 100,
       },
       _count: { select: { followers: true } },
     },
   });
 
-  if (!producer || producer.role !== "PRODUCER") return notFound();
+  if (!producer || producer.role !== "PRODUCER" || producer.producerStatus !== "APPROVED") return notFound();
 
   const session = await getServerSession(authOptions);
-  const currentUserId = (session?.user as any)?.id;
+  const currentUserId = session?.user.id;
 
   let isFollowing = false;
   if (currentUserId) {
@@ -38,7 +41,7 @@ export default async function ProducerStorefront({
     isFollowing = !!follow;
   }
 
-  const genres: string[] = producer.genres ? JSON.parse(producer.genres) : [];
+  const genres = Array.isArray(producer.genres) ? producer.genres.filter((item): item is string => typeof item === "string") : [];
 
   return (
     <div className="min-h-screen">
@@ -85,7 +88,7 @@ export default async function ProducerStorefront({
             <div className="flex items-center gap-4 mt-3 text-[13px] text-zinc-500">
               <span>{formatNumber(producer._count.followers)} followers</span>
               <span className="w-1 h-1 rounded-full bg-zinc-700" />
-              <span>{producer.beats.length} beats</span>
+              <span>{producer.beats.length} sounds</span>
             </div>
 
             <div className="mt-4">
@@ -99,15 +102,10 @@ export default async function ProducerStorefront({
         </div>
 
         <div className="mt-10">
-          <h2 className="text-base font-semibold mb-4">Beats</h2>
+          <h2 className="text-base font-semibold mb-2">Beats & sound packs</h2>
+          <p className="mb-4 text-xs text-zinc-500">Creator storefront · Catalog preview · Purchases opening later</p>
           <StorefrontBeats
-            beats={producer.beats.map((b: any) => ({
-              ...b,
-              producer: {
-                displayName: producer.displayName,
-                username: producer.username,
-              },
-            }))}
+            beats={producer.beats.map(serializeCatalogItem)}
           />
         </div>
 

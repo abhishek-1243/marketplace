@@ -1,88 +1,39 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import SearchResults from "./SearchResults";
+import { GENRES } from "@/lib/catalog-policy";
+import { catalogOrder, catalogSelect, marketplaceWhere, serializeCatalogItem } from "@/lib/catalog";
 
-const GENRES = ["All", "Trap", "Hip-Hop", "R&B", "Pop", "Afrobeat", "Drill", "Lo-fi", "Bollywood"];
-
-export default async function SearchPage({
-  searchParams,
-}: {
-  searchParams: { q?: string; genre?: string; sort?: string };
-}) {
-  const where: any = { status: "PUBLISHED" };
-  if (searchParams.genre && searchParams.genre !== "All") {
-    where.genre = searchParams.genre;
-  }
-  if (searchParams.q) {
-    where.OR = [
-      { title: { contains: searchParams.q } },
-      { genre: { contains: searchParams.q } },
-      { tags: { contains: searchParams.q } },
-    ];
-  }
-
-  const orderBy: any =
-    searchParams.sort === "newest" ? { createdAt: "desc" } :
-    searchParams.sort === "price_low" ? {} :
-    { plays: "desc" };
-
-  const beats = await prisma.beat.findMany({
-    where,
-    orderBy,
-    take: 50,
-    include: {
-      producer: { select: { displayName: true, username: true } },
-      licensePlans: { where: { active: true }, select: { price: true, type: true } },
-    },
-  });
-
-  return (
-    <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">
-          {searchParams.q ? `Results for "${searchParams.q}"` : searchParams.genre || "Explore"}
-        </h1>
-        <p className="text-[13px] text-zinc-500 mt-1">{beats.length} beats found</p>
-      </div>
-
-      <div className="flex flex-wrap gap-1.5 mb-5">
-        {GENRES.map((genre) => (
-          <Link
-            key={genre}
-            href={`/search?genre=${genre === "All" ? "" : genre}${searchParams.q ? `&q=${searchParams.q}` : ""}${searchParams.sort ? `&sort=${searchParams.sort}` : ""}`}
-            className={`px-4 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
-              (searchParams.genre === genre || (!searchParams.genre && genre === "All"))
-                ? "bg-white text-black"
-                : "bg-white/[0.06] text-zinc-400 hover:bg-white/[0.1] hover:text-white"
-            }`}
-          >
-            {genre}
-          </Link>
-        ))}
-      </div>
-
-      <div className="flex items-center gap-1.5 mb-6">
-        <span className="text-[12px] text-zinc-500 mr-1">Sort by</span>
-        {[
-          { label: "Trending", value: "trending" },
-          { label: "Newest", value: "newest" },
-          { label: "Price", value: "price_low" },
-        ].map((s) => (
-          <Link
-            key={s.value}
-            href={`/search?${searchParams.genre ? `genre=${searchParams.genre}&` : ""}${searchParams.q ? `q=${searchParams.q}&` : ""}sort=${s.value}`}
-            className={`px-3 py-1 rounded-full text-[12px] font-medium transition-colors ${
-              (searchParams.sort === s.value || (!searchParams.sort && s.value === "trending"))
-                ? "bg-white/[0.12] text-white"
-                : "text-zinc-500 hover:text-zinc-300"
-            }`}
-          >
-            {s.label}
-          </Link>
-        ))}
-      </div>
-
-      <SearchResults beats={beats} />
-    </div>
-  );
+export const dynamic = "force-dynamic";
+type Filters = { q?: string; genre?: string; sort?: string; kind?: string; page?: string };
+export default async function SearchPage({ searchParams }: { searchParams: Promise<Filters> }) {
+  const filters = await searchParams;
+  const page = Math.floor(Math.min(1000, Math.max(1, Number(filters.page) || 1)));
+  const q = filters.q?.trim().slice(0, 80);
+  const kind = filters.kind === "BEAT" || filters.kind === "SOUND_PACK" ? filters.kind : undefined;
+  const where: Prisma.BeatWhereInput = {
+    ...marketplaceWhere, ...(kind ? { kind } : {}),
+    ...(filters.genre && filters.genre !== "All" ? { genre: filters.genre } : {}),
+    ...(q ? { OR: ["title", "description", "genre", "region", "instruments"].map((field) => ({ [field]: { contains: q, mode: "insensitive" } })) } : {}),
+  };
+  const [items, total] = await Promise.all([
+    prisma.beat.findMany({ where, orderBy: catalogOrder(filters.sort), skip: (page - 1) * 24, take: 24, select: catalogSelect }),
+    prisma.beat.count({ where }),
+  ]);
+  const href = (changes: Partial<Filters>) => {
+    const params = new URLSearchParams();
+    Object.entries({ ...filters, page: undefined, ...changes }).forEach(([key, value]) => { if (value && value !== "All") params.set(key, value); });
+    return `/search?${params}`;
+  };
+  return <div className="mx-auto max-w-[1400px] px-4 py-10 sm:px-6">
+    <p className="text-xs uppercase tracking-widest text-amber-300">The Soundfuel collection</p><h1 className="mt-2 text-3xl font-bold">{q ? `Results for “${q}”` : kind === "SOUND_PACK" ? "Original Indian sounds" : kind === "BEAT" ? "Find your next beat" : "Explore beats & sounds"}</h1>
+    <p className="mt-2 text-sm text-zinc-500">{total} selected {total === 1 ? "sound" : "sounds"} · Catalog preview</p>
+    <form action="/search" className="mt-6 flex gap-2"><input name="q" aria-label="Search sounds" defaultValue={q} placeholder="Search instruments, region, genre or title" className="soundfuel-input flex-1" />{kind && <input type="hidden" name="kind" value={kind} />}<button className="soundfuel-button">Search</button></form>
+    <div className="mt-6 flex flex-wrap gap-2">{[["All sounds", ""], ["Beats", "BEAT"], ["Sound packs", "SOUND_PACK"]].map(([label, value]) => <Link key={label} href={href({ kind: value })} className={`rounded-full px-4 py-2 text-sm ${kind === value || (!kind && !value) ? "bg-amber-300 text-black" : "bg-white/5 text-zinc-400"}`}>{label}</Link>)}</div>
+    <div className="mt-4 flex flex-wrap gap-2">{["All", ...GENRES].map((genre) => <Link key={genre} href={href({ genre })} className={`rounded-full border px-3 py-1.5 text-xs ${filters.genre === genre || (!filters.genre && genre === "All") ? "border-amber-300/50 text-amber-300" : "border-white/10 text-zinc-400"}`}>{genre}</Link>)}</div>
+    <div className="my-6 flex flex-wrap items-center gap-3 text-xs text-zinc-500"><span>Sort:</span>{[["Recommended", "recommended"], ["Newest", "newest"], ["Price: low to high", "price_low"]].map(([label, sort]) => <Link key={sort} href={href({ sort })} className={(filters.sort || "recommended") === sort ? "text-amber-300" : "hover:text-white"}>{label}</Link>)}</div>
+    <SearchResults beats={items.map(serializeCatalogItem)} />
+    {total > 24 && <nav aria-label="Catalog pages" className="mt-8 flex items-center justify-center gap-5 text-sm">{page > 1 && <Link href={href({ page: String(page - 1) })}>← Previous</Link>}<span className="text-zinc-500">Page {page} of {Math.ceil(total / 24)}</span>{page * 24 < total && <Link href={href({ page: String(page + 1) })}>Next →</Link>}</nav>}
+  </div>;
 }

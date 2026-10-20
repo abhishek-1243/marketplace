@@ -3,10 +3,13 @@ import "./globals.css";
 import Navbar from "@/components/layout/Navbar";
 import AudioPlayer from "@/components/layout/AudioPlayer";
 import SessionProvider from "@/components/providers/SessionProvider";
+import Footer from "@/components/layout/Footer";
 
 export const metadata: Metadata = {
-  title: "Soundfuel",
-  description: "The marketplace connecting independent producers with artists. Discover, license, and download beats.",
+  metadataBase: new URL(process.env.APP_URL || "http://localhost:3000"),
+  title: { default: "Soundfuel", template: "%s · Soundfuel" },
+  description: "Discover original Indian beats, instruments and sound packs from independent producers. Explore the Soundfuel catalog preview.",
+  openGraph: { title: "Soundfuel", description: "Indian roots. Original beats and sounds.", type: "website" },
 };
 
 export default function RootLayout({
@@ -20,6 +23,7 @@ export default function RootLayout({
         <SessionProvider>
           <Navbar />
           <main className="pt-16 pb-20">{children}</main>
+          <Footer />
           <AudioPlayer />
         </SessionProvider>
       </body>

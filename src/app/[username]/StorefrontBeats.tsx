@@ -10,7 +10,7 @@ export default function StorefrontBeats({ beats }: { beats: any[] }) {
       ))}
       {beats.length === 0 && (
         <p className="col-span-full text-center text-gray-500 py-12">
-          No beats published yet.
+          No sounds published yet.
         </p>
       )}
     </div>

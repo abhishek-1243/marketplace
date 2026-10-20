@@ -22,7 +22,7 @@ interface LibraryBeatRowProps {
       includesWav: boolean;
       includesStems: boolean;
     };
-    agreement: { id: string } | null;
+    agreement: { id: string; contentHash: string } | null;
   };
 }
 
@@ -88,25 +88,25 @@ export default function LibraryBeatRow({ order }: LibraryBeatRowProps) {
       <div className="flex items-center gap-2 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
         <div className="flex gap-1">
           {order.licensePlan.includesMp3 && (
-            <button className="flex items-center gap-1 px-2.5 py-1 bg-white/[0.06] hover:bg-white/[0.12] rounded-full text-[11px] font-medium text-zinc-400 hover:text-white">
+            <a href={`/api/orders/${order.id}/download/mp3`} className="flex items-center gap-1 px-2.5 py-1 bg-white/[0.06] hover:bg-white/[0.12] rounded-full text-[11px] font-medium text-zinc-400 hover:text-white">
               <Download className="w-3 h-3" /> MP3
-            </button>
+            </a>
           )}
           {order.licensePlan.includesWav && (
-            <button className="flex items-center gap-1 px-2.5 py-1 bg-white/[0.06] hover:bg-white/[0.12] rounded-full text-[11px] font-medium text-zinc-400 hover:text-white">
+            <a href={`/api/orders/${order.id}/download/wav`} className="flex items-center gap-1 px-2.5 py-1 bg-white/[0.06] hover:bg-white/[0.12] rounded-full text-[11px] font-medium text-zinc-400 hover:text-white">
               <Download className="w-3 h-3" /> WAV
-            </button>
+            </a>
           )}
           {order.licensePlan.includesStems && (
-            <button className="flex items-center gap-1 px-2.5 py-1 bg-white/[0.06] hover:bg-white/[0.12] rounded-full text-[11px] font-medium text-zinc-400 hover:text-white">
+            <a href={`/api/orders/${order.id}/download/stems`} className="flex items-center gap-1 px-2.5 py-1 bg-white/[0.06] hover:bg-white/[0.12] rounded-full text-[11px] font-medium text-zinc-400 hover:text-white">
               <Download className="w-3 h-3" /> Stems
-            </button>
+            </a>
           )}
         </div>
         {order.agreement && (
-          <button className="p-1.5 hover:bg-white/[0.06] rounded-full text-zinc-500 hover:text-white" title="View Agreement">
+          <a href={`/api/orders/${order.id}/agreement`} className="p-1.5 hover:bg-white/[0.06] rounded-full text-zinc-500 hover:text-white" title="Download agreement">
             <FileText className="w-4 h-4" />
-          </button>
+          </a>
         )}
       </div>
     </div>

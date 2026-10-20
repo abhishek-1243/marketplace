@@ -3,7 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { UserPlus, UserCheck, MessageSquare, Loader2 } from "lucide-react";
+import { UserPlus, UserCheck, Loader2 } from "lucide-react";
 
 export default function StorefrontActions({
   producerId,
@@ -18,9 +18,8 @@ export default function StorefrontActions({
   const router = useRouter();
   const [following, setFollowing] = useState(initialFollowing);
   const [loading, setLoading] = useState(false);
-  const [msgLoading, setMsgLoading] = useState(false);
 
-  const currentUserId = (session?.user as any)?.id;
+  const currentUserId = session?.user.id;
   const isOwnPage = currentUserId === producerId;
 
   const handleFollow = async () => {
@@ -42,27 +41,6 @@ export default function StorefrontActions({
       console.error("Follow error:", err);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleMessage = async () => {
-    if (!session) {
-      router.push("/login");
-      return;
-    }
-    setMsgLoading(true);
-    try {
-      const res = await fetch("/api/conversations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ participantId: producerId }),
-      });
-      const data = await res.json();
-      router.push(`/messages?conv=${data.id}`);
-    } catch (err) {
-      console.error("Message error:", err);
-    } finally {
-      setMsgLoading(false);
     }
   };
 
@@ -96,18 +74,6 @@ export default function StorefrontActions({
           <UserPlus className="w-3.5 h-3.5" />
         )}
         {following ? "Following" : "Follow"}
-      </button>
-      <button
-        onClick={handleMessage}
-        disabled={msgLoading}
-        className="flex items-center gap-1.5 px-5 py-2 bg-white/[0.07] hover:bg-white/[0.12] rounded-full text-[13px] font-medium text-zinc-300 hover:text-white"
-      >
-        {msgLoading ? (
-          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-        ) : (
-          <MessageSquare className="w-3.5 h-3.5" />
-        )}
-        Message
       </button>
     </div>
   );

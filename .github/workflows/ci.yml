@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: soundfuel
+          POSTGRES_PASSWORD: soundfuel
+          POSTGRES_DB: soundfuel_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U soundfuel"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://soundfuel:soundfuel@localhost:5432/soundfuel_test
+      NEXTAUTH_URL: http://localhost:3000
+      NEXTAUTH_SECRET: ci-secret-at-least-32-characters-long
+      APP_URL: http://localhost:3000
+      NEXT_PUBLIC_SUPPORT_EMAIL: support@example.com
+      GOOGLE_CLIENT_ID: ci-client
+      GOOGLE_CLIENT_SECRET: ci-secret
+      AWS_REGION: ap-south-1
+      AWS_ACCESS_KEY_ID: ci-key
+      AWS_SECRET_ACCESS_KEY: ci-secret
+      AWS_S3_MEDIA_BUCKET: ci-bucket
+      AWS_CLOUDFRONT_URL: https://media.example.com
+      AWS_SES_FROM_EMAIL: ci@example.com
+      PAYMENTS_ENABLED: "false"
+      COMMERCE_LAUNCH_APPROVED: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run db:generate
+      - run: npx prisma validate
+      - run: npm run db:deploy
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+      - run: npm run test:smoke

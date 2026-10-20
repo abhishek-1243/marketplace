@@ -8,7 +8,7 @@ export default async function SettingsPage() {
   const session = await getServerSession(authOptions);
   if (!session) redirect("/login");
 
-  const userId = (session.user as any).id;
+  const userId = session.user.id;
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -36,7 +36,7 @@ export default async function SettingsPage() {
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
       <h1 className="text-xl font-bold tracking-tight mb-1">Profile Settings</h1>
       <p className="text-[13px] text-zinc-500 mb-8">Customize your storefront</p>
-      <SettingsForm user={user} />
+      <SettingsForm user={{ ...user, genres: Array.isArray(user.genres) ? user.genres.filter((genre): genre is string => typeof genre === "string") : null }} />
     </div>
   );
 }

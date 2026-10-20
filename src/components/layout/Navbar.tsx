@@ -8,8 +8,8 @@ import {
   Home,
   Compass,
   Library,
-  MessageSquare,
   LayoutDashboard,
+  ShieldCheck,
   LogOut,
   User,
   Menu,
@@ -22,7 +22,7 @@ import { useRouter } from "next/navigation";
 
 export default function Navbar() {
   const { data: session } = useSession();
-  const user = session?.user as any;
+  const user = session?.user;
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const router = useRouter();
@@ -39,11 +39,11 @@ export default function Navbar() {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 h-16 bg-black/80 backdrop-blur-2xl border-b border-white/[0.06]">
       <div className="h-full max-w-[1400px] mx-auto px-4 sm:px-6 flex items-center gap-4">
-        <Link href="/" className="flex items-center gap-2 shrink-0 mr-2">
+        <Link href="/" aria-label="Soundfuel home" className="flex items-center gap-2 shrink-0 mr-2">
           <img
-            src="/images/soundfuel-icon.png"
+            src="/images/soundfuel-logo-new.png"
             alt=""
-            className="h-6 w-auto invert"
+            className="h-6 w-auto"
           />
           <span className="text-[15px] font-bold tracking-tight hidden sm:block">soundfuel</span>
         </Link>
@@ -51,12 +51,14 @@ export default function Navbar() {
         <div className="hidden md:flex items-center gap-1">
           <button
             onClick={() => router.back()}
+            aria-label="Go back"
             className="w-8 h-8 rounded-full bg-white/[0.07] flex items-center justify-center hover:bg-white/[0.12] text-zinc-400 hover:text-white"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
           <button
             onClick={() => router.forward()}
+            aria-label="Go forward"
             className="w-8 h-8 rounded-full bg-white/[0.07] flex items-center justify-center hover:bg-white/[0.12] text-zinc-400 hover:text-white"
           >
             <ChevronRight className="w-4 h-4" />
@@ -78,13 +80,15 @@ export default function Navbar() {
             <Compass className="w-4 h-4" />
             Explore
           </Link>
+          <Link href="/search?kind=SOUND_PACK" className="text-zinc-400 hover:text-white">Sound packs</Link>
+          <Link href="/apply" className="text-zinc-400 hover:text-white">For creators</Link>
           {session && (
             <Link
               href="/library"
               className={`flex items-center gap-2 py-1 ${pathname === "/library" ? "text-white" : "text-zinc-400 hover:text-white"}`}
             >
               <Library className="w-4 h-4" />
-              Library
+              Saved
             </Link>
           )}
         </div>
@@ -95,6 +99,7 @@ export default function Navbar() {
             <input
               type="text"
               placeholder="What do you want to find?"
+              aria-label="Search sounds"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 bg-white/[0.07] hover:bg-white/[0.1] rounded-full text-[13px] placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-white/20 focus:bg-white/[0.1] border-0"
@@ -114,21 +119,21 @@ export default function Navbar() {
                   Dashboard
                 </Link>
               )}
-              <Link
-                href="/messages"
-                className={`p-2 rounded-full ${pathname === "/messages" ? "text-white bg-white/[0.12]" : "text-zinc-400 hover:text-white hover:bg-white/[0.07]"}`}
-              >
-                <MessageSquare className="w-4 h-4" />
-              </Link>
+              {user?.role === "ADMIN" && (
+                <Link href="/admin" className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium ${pathname.startsWith("/admin") ? "bg-amber-300/10 text-amber-300" : "text-zinc-400 hover:text-white hover:bg-white/[0.07]"}`}>
+                  <ShieldCheck className="w-3.5 h-3.5" /> Admin
+                </Link>
+              )}
               <div className="w-px h-5 bg-white/10 mx-1" />
               <Link
-                href={`/${user?.username || ""}`}
+                href={user?.role === "PRODUCER" ? `/${user?.username || ""}` : user?.role === "ADMIN" ? "/admin" : "/library"}
                 className="w-8 h-8 rounded-full bg-zinc-700 flex items-center justify-center text-[13px] font-medium hover:scale-105 overflow-hidden"
               >
                 {user?.name?.[0]?.toUpperCase() || <User className="w-4 h-4" />}
               </Link>
               <button
                 onClick={() => signOut()}
+                aria-label="Sign out"
                 className="p-2 rounded-full text-zinc-500 hover:text-white hover:bg-white/[0.07]"
               >
                 <LogOut className="w-4 h-4" />
@@ -144,7 +149,7 @@ export default function Navbar() {
               </Link>
               <Link
                 href="/login"
-                className="px-6 py-2 bg-white text-black rounded-full text-[13px] font-semibold hover:scale-[1.02] hover:bg-zinc-100"
+                className="rounded-full bg-amber-300 px-6 py-2 text-[13px] font-semibold text-black hover:bg-amber-200"
               >
                 Log in
               </Link>
@@ -154,6 +159,8 @@ export default function Navbar() {
 
         <button
           onClick={() => setMenuOpen(!menuOpen)}
+          aria-label={menuOpen ? "Close navigation" : "Open navigation"}
+          aria-expanded={menuOpen}
           className="md:hidden p-2 rounded-full text-zinc-400 hover:text-white ml-auto"
         >
           {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -169,6 +176,7 @@ export default function Navbar() {
                 <input
                   type="text"
                   placeholder="Search..."
+                  aria-label="Search sounds"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-10 pr-4 py-2.5 bg-white/[0.07] rounded-lg text-sm placeholder:text-zinc-500 focus:outline-none border-0"
@@ -183,6 +191,8 @@ export default function Navbar() {
             <Link href="/search" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-zinc-300 hover:bg-white/[0.05]" onClick={() => setMenuOpen(false)}>
               <Compass className="w-4 h-4" /> Explore
             </Link>
+            <Link href="/search?kind=SOUND_PACK" className="block px-3 py-2.5 text-sm text-zinc-300" onClick={() => setMenuOpen(false)}>Sound packs</Link>
+            <Link href="/apply" className="block px-3 py-2.5 text-sm text-zinc-300" onClick={() => setMenuOpen(false)}>For creators</Link>
             {session ? (
               <>
                 {user?.role === "PRODUCER" && (
@@ -190,11 +200,13 @@ export default function Navbar() {
                     <LayoutDashboard className="w-4 h-4" /> Dashboard
                   </Link>
                 )}
+                {user?.role === "ADMIN" && (
+                  <Link href="/admin" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-amber-300 hover:bg-white/[0.05]" onClick={() => setMenuOpen(false)}>
+                    <ShieldCheck className="w-4 h-4" /> Admin
+                  </Link>
+                )}
                 <Link href="/library" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-zinc-300 hover:bg-white/[0.05]" onClick={() => setMenuOpen(false)}>
-                  <Library className="w-4 h-4" /> Library
-                </Link>
-                <Link href="/messages" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-zinc-300 hover:bg-white/[0.05]" onClick={() => setMenuOpen(false)}>
-                  <MessageSquare className="w-4 h-4" /> Messages
+                  <Library className="w-4 h-4" /> Saved sounds
                 </Link>
                 <div className="border-t border-white/[0.06] my-2" />
                 <button onClick={() => { signOut(); setMenuOpen(false); }} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm text-zinc-500 hover:bg-white/[0.05]">
@@ -204,7 +216,7 @@ export default function Navbar() {
             ) : (
               <>
                 <div className="border-t border-white/[0.06] my-2" />
-                <Link href="/login" className="flex items-center justify-center py-2.5 rounded-lg text-sm font-semibold bg-white text-black" onClick={() => setMenuOpen(false)}>
+                <Link href="/login" className="flex items-center justify-center py-2.5 rounded-lg text-sm font-semibold bg-amber-300 text-black" onClick={() => setMenuOpen(false)}>
                   Log in
                 </Link>
                 <Link href="/register" className="flex items-center justify-center py-2.5 rounded-lg text-sm text-zinc-400 hover:text-white" onClick={() => setMenuOpen(false)}>

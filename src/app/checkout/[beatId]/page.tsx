@@ -1,15 +1,20 @@
 import { prisma } from "@/lib/prisma";
-import { notFound } from "next/navigation";
-import { formatPrice } from "@/lib/utils";
+import { notFound, redirect } from "next/navigation";
+import { env } from "@/lib/env";
 import CheckoutClient from "./CheckoutClient";
+import { publicCatalogWhere } from "@/lib/catalog";
+
+export const dynamic = "force-dynamic";
 
 export default async function CheckoutPage({
   params,
 }: {
-  params: { beatId: string };
+  params: Promise<{ beatId: string }>;
 }) {
+  const { beatId } = await params;
+  if (!env.PAYMENTS_ENABLED) redirect(`/sounds/${beatId}`);
   const beat = await prisma.beat.findUnique({
-    where: { id: params.beatId },
+    where: { id: beatId, ...publicCatalogWhere, kind: "BEAT" },
     include: {
       producer: { select: { displayName: true, username: true } },
       licensePlans: { where: { active: true }, orderBy: { price: "asc" } },
@@ -18,5 +23,5 @@ export default async function CheckoutPage({
 
   if (!beat) return notFound();
 
-  return <CheckoutClient beat={beat} />;
+  return <CheckoutClient beat={beat} paymentsEnabled={env.PAYMENTS_ENABLED} />;
 }

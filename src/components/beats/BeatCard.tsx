@@ -8,6 +8,7 @@ import { formatPrice } from "@/lib/utils";
 interface BeatCardProps {
   beat: {
     id: string;
+    kind?: string;
     title: string;
     coverArt: string | null;
     previewUrl: string | null;
@@ -55,13 +56,18 @@ export default function BeatCard({ beat }: BeatCardProps) {
     <div className="group p-3 rounded-xl hover:bg-white/[0.04] transition-colors duration-200 cursor-default">
       <div className="relative aspect-square rounded-lg overflow-hidden bg-zinc-900 mb-3">
         <img
-          src={beat.coverArt || "https://picsum.photos/seed/default/400/400"}
+          src={beat.coverArt || "/images/soundfuel-logo-new.png"}
           alt={beat.title}
           className="w-full h-full object-cover"
+          loading="lazy"
+          width={400}
+          height={400}
         />
         <button
           onClick={handlePlay}
-          className="absolute right-2 bottom-2 w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-xl opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200 hover:scale-105"
+          aria-label={`${isCurrentTrack && isPlaying ? "Pause" : "Play"} ${beat.title}`}
+          disabled={!beat.previewUrl}
+          className="absolute right-2 bottom-2 w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-xl transition-all duration-200 hover:scale-105 disabled:opacity-40"
         >
           {isCurrentTrack && isPlaying ? (
             <Pause className="w-4 h-4 text-black" />
@@ -80,7 +86,7 @@ export default function BeatCard({ beat }: BeatCardProps) {
 
       <div>
         <h3 className="text-[13px] font-medium text-white truncate leading-tight">
-          {beat.title}
+          <Link href={`/sounds/${beat.id}`} className="hover:text-amber-300">{beat.title}</Link>
         </h3>
         <Link
           href={`/${beat.producer.username}`}
@@ -90,20 +96,20 @@ export default function BeatCard({ beat }: BeatCardProps) {
         </Link>
 
         <div className="flex items-center gap-1.5 mt-2 text-[11px] text-zinc-500">
-          <span className="px-1.5 py-0.5 bg-white/[0.06] rounded text-zinc-400">{beat.genre}</span>
+          <span className="px-1.5 py-0.5 bg-white/[0.06] rounded text-zinc-400">{beat.kind === "SOUND_PACK" ? "Sound pack" : beat.genre}</span>
           {beat.bpm && <span>{beat.bpm} BPM</span>}
           {beat.musicalKey && <span>{beat.musicalKey}</span>}
         </div>
 
         <div className="flex items-center justify-between mt-2.5">
           <span className="text-[13px] font-semibold text-white">
-            {formatPrice(lowestPrice)}
+            {lowestPrice ? `From ${formatPrice(lowestPrice)}` : "Preview"}
           </span>
           <Link
-            href={`/checkout/${beat.id}`}
+            href={`/sounds/${beat.id}`}
             className="px-3 py-1 bg-white/[0.08] hover:bg-white/[0.14] rounded-full text-[11px] font-medium text-zinc-300 hover:text-white"
           >
-            License
+            Details
           </Link>
         </div>
       </div>
