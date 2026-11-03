@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="title">
+  <title id="title">Soundfuel — Flame Bars symbol</title>
+  <g transform="translate(0 15)">
+    <path id="track" fill="#101114" d="M50.22 205.78 A110 110 0 1 1 205.78 205.78 A6 6 0 0 1 197.3 197.3 A98 98 0 1 0 58.7 197.3 A6 6 0 0 1 50.22 205.78 Z"/>
+    <path id="bars" fill="#101114" d="M87 184 L87 158 A7 7 0 0 0 73 158 L73 184 A7 7 0 0 0 87 184 Z M111 184 L111 128 A7 7 0 0 0 97 128 L97 184 A7 7 0 0 0 111 184 Z M159 184 L159 116 A7 7 0 0 0 145 116 L145 184 A7 7 0 0 0 159 184 Z M183 184 L183 148 A7 7 0 0 0 169 148 L169 184 A7 7 0 0 0 183 184 Z"/>
+    <path id="crest" fill="#A8452C" d="M120 184 L120 120 C120 102 131 92 137 80 C141 72 142 62 139 50 C150 61 154 78 148 93 C144 103 136 110 136 122 L136 184 A8 8 0 0 1 120 184 Z"/>
+  </g>
+</svg>

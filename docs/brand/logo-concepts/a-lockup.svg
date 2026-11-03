@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 256" width="900" height="256" role="img" aria-labelledby="title">
+  <title id="title">Soundfuel concept A horizontal lockup (exploration: live text)</title>
+  <g id="symbol" transform="translate(8 28) scale(0.78)"><path transform="translate(0 3)" fill="#111111" fill-rule="evenodd" d="M128 20 L190.45 98 A80 80 0 1 1 65.55 98 Z M128 96 A52 52 0 1 1 127.9 96 Z M128 120 A28 28 0 1 0 128.1 120 Z"/></g>
+  <text id="wordmark" x="232" y="166" font-family="Sora, 'Segoe UI', Arial, sans-serif" font-size="118" font-weight="600" letter-spacing="-4" fill="#111111">soundfuel</text>
+</svg>

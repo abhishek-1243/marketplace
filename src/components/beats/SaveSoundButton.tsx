@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 export default function SaveSoundButton({ beatId, initialSaved = false }: { beatId: string; initialSaved?: boolean }) {
   const { data: session } = useSession(); const router = useRouter();
   const [saved, setSaved] = useState(initialSaved); const [busy, setBusy] = useState(false); const [error, setError] = useState("");
-  return <div><button aria-pressed={saved} disabled={busy} className="soundfuel-button-secondary" onClick={async () => {
+  return <div><button type="button" aria-pressed={saved} aria-busy={busy} disabled={busy} className="soundfuel-button-secondary" onClick={async () => {
     if (!session) { router.push("/login"); return; }
     setBusy(true); setError("");
     try {
@@ -16,5 +16,5 @@ export default function SaveSoundButton({ beatId, initialSaved = false }: { beat
       if (!response.ok) throw new Error(result.error);
       setSaved(result.favorited); router.refresh();
     } catch (err) { setError(err instanceof Error ? err.message : "Could not save"); } finally { setBusy(false); }
-  }}><Heart className={`h-4 w-4 ${saved ? "fill-amber-300 text-amber-300" : ""}`} />{saved ? "Saved" : "Save sound"}</button>{error && <p role="alert" className="mt-2 text-sm text-red-300">{error}</p>}</div>;
+  }}><Heart aria-hidden="true" className={`h-4 w-4 ${saved ? "fill-accent-300 text-accent-300" : ""}`} />{busy ? "Saving…" : saved ? "Saved" : "Save sound"}</button>{error && <p role="alert" className="mt-2 text-sm text-red-300">{error}</p>}</div>;
 }

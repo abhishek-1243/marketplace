@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="title">
+  <title id="title">Soundfuel concept F — Flame Bars</title>
+  <g transform="translate(0 14)">
+    <path id="track" fill="#101114" d="M50.22 205.78 A110 110 0 1 1 205.78 205.78 A6 6 0 0 1 197.3 197.3 A98 98 0 1 0 58.7 197.3 A6 6 0 0 1 50.22 205.78 Z"/>
+    <path id="bars" fill="#101114" d="M87 180 L87 152 A7 7 0 0 0 73 152 L73 180 A7 7 0 0 0 87 180 Z M111 180 L111 124 A7 7 0 0 0 97 124 L97 180 A7 7 0 0 0 111 180 Z M159 180 L159 112 A7 7 0 0 0 145 112 L145 180 A7 7 0 0 0 159 180 Z M183 180 L183 148 A7 7 0 0 0 169 148 L169 180 A7 7 0 0 0 183 180 Z"/>
+    <path id="crest" fill="#A8452C" d="M118 180 L118 118 C118 96 128 86 136 74 C141 66 144 58 142 48 C152 62 154 80 146 94 C141 104 138 110 138 120 L138 180 A10 10 0 0 1 118 180 Z"/>
+  </g>
+</svg>

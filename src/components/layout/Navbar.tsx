@@ -2,231 +2,72 @@
 
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
-import { usePathname } from "next/navigation";
-import {
-  Search,
-  Home,
-  Compass,
-  Library,
-  LayoutDashboard,
-  ShieldCheck,
-  LogOut,
-  User,
-  Menu,
-  X,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { Search, Menu, X, LogOut, LayoutDashboard, ShieldCheck, Bookmark, ArrowUpRight } from "lucide-react";
+import Brand from "./Brand";
 
 export default function Navbar() {
-  const { data: session } = useSession();
-  const user = session?.user;
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const router = useRouter();
+  const { data: session, status } = useSession();
   const pathname = usePathname();
+  const router = useRouter();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const headerRef = useRef<HTMLElement>(null);
+  const toggleRef = useRef<HTMLButtonElement>(null);
+  const user = session?.user;
+  const workspace = user?.role === "ADMIN" ? "/admin" : user?.role === "PRODUCER" ? "/dashboard" : "/library";
+  const WorkspaceIcon = user?.role === "ADMIN" ? ShieldCheck : user?.role === "PRODUCER" ? LayoutDashboard : Bookmark;
+  const workspaceLabel = user?.role === "ADMIN" ? "Admin" : user?.role === "PRODUCER" ? "Creator studio" : "Saved sounds";
+  const links = [{ href: "/", label: "Discover" }, { href: "/search", label: "Explore sounds" }, { href: "/apply", label: "For creators" }];
+  const isCurrent = (href: string) => pathname === href || (pathname === "/ui-preview" && href === "/");
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-      setMenuOpen(false);
-    }
-  };
+  useEffect(() => { setMenuOpen(false); }, [pathname]);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const dismiss = (event: PointerEvent) => { if (!headerRef.current?.contains(event.target as Node)) setMenuOpen(false); };
+    const escape = (event: KeyboardEvent) => { if (event.key === "Escape") { setMenuOpen(false); toggleRef.current?.focus(); } };
+    document.addEventListener("pointerdown", dismiss);
+    document.addEventListener("keydown", escape);
+    return () => { document.removeEventListener("pointerdown", dismiss); document.removeEventListener("keydown", escape); };
+  }, [menuOpen]);
 
-  return (
-    <nav className="fixed top-0 left-0 right-0 z-50 h-16 bg-black/80 backdrop-blur-2xl border-b border-white/[0.06]">
-      <div className="h-full max-w-[1400px] mx-auto px-4 sm:px-6 flex items-center gap-4">
-        <Link href="/" aria-label="Soundfuel home" className="flex items-center gap-2 shrink-0 mr-2">
-          <img
-            src="/images/soundfuel-logo-new.png"
-            alt=""
-            className="h-6 w-auto"
-          />
-          <span className="text-[15px] font-bold tracking-tight hidden sm:block">soundfuel</span>
-        </Link>
+  function search(event: React.FormEvent) {
+    event.preventDefault();
+    router.push(query.trim() ? `/search?q=${encodeURIComponent(query.trim())}` : "/search");
+    setMenuOpen(false);
+  }
 
-        <div className="hidden md:flex items-center gap-1">
-          <button
-            onClick={() => router.back()}
-            aria-label="Go back"
-            className="w-8 h-8 rounded-full bg-white/[0.07] flex items-center justify-center hover:bg-white/[0.12] text-zinc-400 hover:text-white"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => router.forward()}
-            aria-label="Go forward"
-            className="w-8 h-8 rounded-full bg-white/[0.07] flex items-center justify-center hover:bg-white/[0.12] text-zinc-400 hover:text-white"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
-
-        <div className="hidden md:flex items-center gap-6 text-[13px] font-medium">
-          <Link
-            href="/"
-            className={`flex items-center gap-2 py-1 ${pathname === "/" ? "text-white" : "text-zinc-400 hover:text-white"}`}
-          >
-            <Home className="w-4 h-4" />
-            Home
-          </Link>
-          <Link
-            href="/search"
-            className={`flex items-center gap-2 py-1 ${pathname === "/search" ? "text-white" : "text-zinc-400 hover:text-white"}`}
-          >
-            <Compass className="w-4 h-4" />
-            Explore
-          </Link>
-          <Link href="/search?kind=SOUND_PACK" className="text-zinc-400 hover:text-white">Sound packs</Link>
-          <Link href="/apply" className="text-zinc-400 hover:text-white">For creators</Link>
-          {session && (
-            <Link
-              href="/library"
-              className={`flex items-center gap-2 py-1 ${pathname === "/library" ? "text-white" : "text-zinc-400 hover:text-white"}`}
-            >
-              <Library className="w-4 h-4" />
-              Saved
-            </Link>
-          )}
-        </div>
-
-        <form onSubmit={handleSearch} className="hidden md:block flex-1 max-w-sm mx-auto">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-            <input
-              type="text"
-              placeholder="What do you want to find?"
-              aria-label="Search sounds"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-white/[0.07] hover:bg-white/[0.1] rounded-full text-[13px] placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-white/20 focus:bg-white/[0.1] border-0"
-            />
-          </div>
-        </form>
-
-        <div className="hidden md:flex items-center gap-2 ml-auto">
-          {session ? (
-            <>
-              {user?.role === "PRODUCER" && (
-                <Link
-                  href="/dashboard"
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium ${pathname.startsWith("/dashboard") ? "bg-white/[0.12] text-white" : "text-zinc-400 hover:text-white hover:bg-white/[0.07]"}`}
-                >
-                  <LayoutDashboard className="w-3.5 h-3.5" />
-                  Dashboard
-                </Link>
-              )}
-              {user?.role === "ADMIN" && (
-                <Link href="/admin" className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium ${pathname.startsWith("/admin") ? "bg-amber-300/10 text-amber-300" : "text-zinc-400 hover:text-white hover:bg-white/[0.07]"}`}>
-                  <ShieldCheck className="w-3.5 h-3.5" /> Admin
-                </Link>
-              )}
-              <div className="w-px h-5 bg-white/10 mx-1" />
-              <Link
-                href={user?.role === "PRODUCER" ? `/${user?.username || ""}` : user?.role === "ADMIN" ? "/admin" : "/library"}
-                className="w-8 h-8 rounded-full bg-zinc-700 flex items-center justify-center text-[13px] font-medium hover:scale-105 overflow-hidden"
-              >
-                {user?.name?.[0]?.toUpperCase() || <User className="w-4 h-4" />}
-              </Link>
-              <button
-                onClick={() => signOut()}
-                aria-label="Sign out"
-                className="p-2 rounded-full text-zinc-500 hover:text-white hover:bg-white/[0.07]"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
-            </>
-          ) : (
-            <div className="flex items-center gap-3">
-              <Link
-                href="/register"
-                className="text-[13px] font-medium text-zinc-400 hover:text-white"
-              >
-                Sign up
-              </Link>
-              <Link
-                href="/login"
-                className="rounded-full bg-amber-300 px-6 py-2 text-[13px] font-semibold text-black hover:bg-amber-200"
-              >
-                Log in
-              </Link>
-            </div>
-          )}
-        </div>
-
-        <button
-          onClick={() => setMenuOpen(!menuOpen)}
-          aria-label={menuOpen ? "Close navigation" : "Open navigation"}
-          aria-expanded={menuOpen}
-          className="md:hidden p-2 rounded-full text-zinc-400 hover:text-white ml-auto"
-        >
-          {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
+  return <header ref={headerRef} data-authenticated={!!session} className="glass-chrome fixed inset-x-0 top-0 z-50">
+    <div className="header-row mx-auto flex h-20 max-w-7xl items-center gap-5 px-4 sm:px-6 lg:px-8">
+      <Link href="/" aria-label="Soundfuel home" className="header-brand flex h-11 shrink-0 items-center rounded-xl"><Brand /></Link>
+      <nav aria-label="Main navigation" className="primary-navigation hidden items-center gap-1 xl:flex">
+        {links.map((link) => <Link key={link.href} href={link.href} className="nav-link" aria-current={isCurrent(link.href) ? "page" : undefined}>{link.label}</Link>)}
+        {session && workspace !== "/library" && <Link href="/library" className="nav-link" aria-current={pathname === "/library" ? "page" : undefined}>Saved sounds</Link>}
+      </nav>
+      <form onSubmit={search} role="search" className="header-search relative ml-auto hidden min-w-0 max-w-64 flex-1 xl:block">
+        <Search aria-hidden="true" className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+        <input aria-label="Search the catalog" placeholder="Search sounds" value={query} onChange={(event) => setQuery(event.target.value)} maxLength={80} className="soundfuel-input !rounded-full !py-2.5 !pl-10 !text-sm" />
+      </form>
+      <div className="header-account hidden shrink-0 items-center gap-2 xl:flex">
+        {status === "loading" ? <span className="h-11 w-24 rounded-full bg-raised" aria-label="Loading account" /> : session ? <>
+          <Link href={workspace} className="soundfuel-button-secondary !px-4"><WorkspaceIcon aria-hidden="true" className="h-4 w-4" />{workspaceLabel}</Link>
+          <button onClick={() => signOut()} aria-label="Sign out" className="icon-button"><LogOut className="h-4 w-4" /></button>
+        </> : <><Link href="/login" className="nav-link">Sign in</Link><Link href="/register" className="soundfuel-button !py-2.5">Get started<ArrowUpRight aria-hidden="true" className="h-4 w-4" /></Link></>}
       </div>
-
-      {menuOpen && (
-        <div className="md:hidden bg-zinc-950 border-t border-white/[0.06]">
-          <div className="px-4 py-3">
-            <form onSubmit={handleSearch}>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  aria-label="Search sounds"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-white/[0.07] rounded-lg text-sm placeholder:text-zinc-500 focus:outline-none border-0"
-                />
-              </div>
-            </form>
-          </div>
-          <div className="px-4 pb-4 space-y-0.5">
-            <Link href="/" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-zinc-300 hover:bg-white/[0.05]" onClick={() => setMenuOpen(false)}>
-              <Home className="w-4 h-4" /> Home
-            </Link>
-            <Link href="/search" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-zinc-300 hover:bg-white/[0.05]" onClick={() => setMenuOpen(false)}>
-              <Compass className="w-4 h-4" /> Explore
-            </Link>
-            <Link href="/search?kind=SOUND_PACK" className="block px-3 py-2.5 text-sm text-zinc-300" onClick={() => setMenuOpen(false)}>Sound packs</Link>
-            <Link href="/apply" className="block px-3 py-2.5 text-sm text-zinc-300" onClick={() => setMenuOpen(false)}>For creators</Link>
-            {session ? (
-              <>
-                {user?.role === "PRODUCER" && (
-                  <Link href="/dashboard" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-zinc-300 hover:bg-white/[0.05]" onClick={() => setMenuOpen(false)}>
-                    <LayoutDashboard className="w-4 h-4" /> Dashboard
-                  </Link>
-                )}
-                {user?.role === "ADMIN" && (
-                  <Link href="/admin" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-amber-300 hover:bg-white/[0.05]" onClick={() => setMenuOpen(false)}>
-                    <ShieldCheck className="w-4 h-4" /> Admin
-                  </Link>
-                )}
-                <Link href="/library" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-zinc-300 hover:bg-white/[0.05]" onClick={() => setMenuOpen(false)}>
-                  <Library className="w-4 h-4" /> Saved sounds
-                </Link>
-                <div className="border-t border-white/[0.06] my-2" />
-                <button onClick={() => { signOut(); setMenuOpen(false); }} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm text-zinc-500 hover:bg-white/[0.05]">
-                  <LogOut className="w-4 h-4" /> Sign out
-                </button>
-              </>
-            ) : (
-              <>
-                <div className="border-t border-white/[0.06] my-2" />
-                <Link href="/login" className="flex items-center justify-center py-2.5 rounded-lg text-sm font-semibold bg-amber-300 text-black" onClick={() => setMenuOpen(false)}>
-                  Log in
-                </Link>
-                <Link href="/register" className="flex items-center justify-center py-2.5 rounded-lg text-sm text-zinc-400 hover:text-white" onClick={() => setMenuOpen(false)}>
-                  Sign up
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-    </nav>
-  );
+      <div className="header-compact ml-auto flex items-center gap-1 xl:hidden">
+        <Link href="/search" className="icon-button" aria-label="Search sounds"><Search className="h-5 w-5" /></Link>
+        <button ref={toggleRef} onClick={() => setMenuOpen((open) => !open)} aria-label={menuOpen ? "Close navigation" : "Open navigation"} aria-expanded={menuOpen} aria-controls="mobile-navigation" className="icon-button">{menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}</button>
+      </div>
+    </div>
+    {menuOpen && <nav id="mobile-navigation" aria-label="Mobile navigation" className="mobile-menu xl:hidden">
+      <form onSubmit={search} role="search" className="mb-3"><input autoFocus aria-label="Search the catalog" className="soundfuel-input" placeholder="Search instruments, genres, sounds…" value={query} onChange={(event) => setQuery(event.target.value)} maxLength={80} /><button type="submit" className="soundfuel-button mt-2 w-full">Search sounds</button></form>
+      {[...links, { href: "/search?kind=SOUND_PACK", label: "Original sound packs" }].map((link) => <Link key={link.href} href={link.href} onClick={() => setMenuOpen(false)} className="nav-link !flex !rounded-xl" aria-current={isCurrent(link.href) ? "page" : undefined}>{link.label}</Link>)}
+      <div className="mt-3 border-t border-line pt-3">{session ? <>
+        <Link href={workspace} onClick={() => setMenuOpen(false)} className="nav-link !flex"><WorkspaceIcon aria-hidden="true" className="h-4 w-4" />{workspaceLabel}</Link>
+        {workspace !== "/library" && <Link href="/library" onClick={() => setMenuOpen(false)} className="nav-link !flex">Saved sounds</Link>}
+        <button onClick={() => { setMenuOpen(false); signOut(); }} className="nav-link w-full"><LogOut aria-hidden="true" className="h-4 w-4" />Sign out</button>
+      </> : <div className="grid grid-cols-2 gap-2"><Link onClick={() => setMenuOpen(false)} href="/login" className="soundfuel-button-secondary">Sign in</Link><Link onClick={() => setMenuOpen(false)} href="/register" className="soundfuel-button">Get started</Link></div>}</div>
+    </nav>}
+  </header>;
 }

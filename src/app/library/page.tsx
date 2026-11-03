@@ -40,17 +40,17 @@ export default async function LibraryPage() {
   }));
 
   return (
-    <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-8">
-      <h1 className="text-2xl font-bold tracking-tight mb-2">Saved sounds</h1>
-      <p className="text-sm text-zinc-500 mb-6">Keep your next idea close. Save beats and packs from their detail pages.</p>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+      <h1 className="text-2xl font-semibold tracking-tight mb-2">Saved sounds</h1>
+      <p className="text-sm text-muted mb-6">Keep your next idea close. Save beats and packs from their detail pages.</p>
       <HomeBeats beats={favorites.map(({ beat }) => serializeCatalogItem(beat))} />
       <h2 className="mt-10 text-lg font-semibold">Licensed library</h2>
 
       {orders.length === 0 ? (
         <div className="text-center py-20">
           <Music className="w-10 h-10 mx-auto mb-3 text-zinc-700" />
-          <p className="text-[15px] font-medium text-zinc-400">No licensed beats yet</p>
-          <p className="text-[13px] text-zinc-600 mt-1">Purchases and production-file downloads open in a later release.</p>
+          <p className="text-[15px] font-medium text-secondary">No licensed beats yet</p>
+          <p className="text-[13px] text-muted mt-1">Purchases and production-file downloads open in a later release.</p>
         </div>
       ) : (
         <div className="space-y-1">

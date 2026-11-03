@@ -34,8 +34,8 @@ export default async function SettingsPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
-      <h1 className="text-xl font-bold tracking-tight mb-1">Profile Settings</h1>
-      <p className="text-[13px] text-zinc-500 mb-8">Customize your storefront</p>
+      <h1 className="text-xl font-semibold tracking-tight mb-1">Profile Settings</h1>
+      <p className="text-[13px] text-muted mb-8">Customize your storefront</p>
       <SettingsForm user={{ ...user, genres: Array.isArray(user.genres) ? user.genres.filter((genre): genre is string => typeof genre === "string") : null }} />
     </div>
   );

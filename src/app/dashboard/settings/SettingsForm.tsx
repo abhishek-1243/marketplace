@@ -147,8 +147,8 @@ export default function SettingsForm({ user }: { user: UserData }) {
     }
   };
 
-  const inputClass = "w-full px-4 py-2.5 bg-white/[0.07] hover:bg-white/[0.1] rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-white/30 border-0";
-  const labelClass = "block text-[13px] font-medium text-zinc-400 mb-1.5";
+  const inputClass = "soundfuel-input";
+  const labelClass = "block text-[13px] font-medium text-secondary mb-1.5";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
@@ -175,8 +175,12 @@ export default function SettingsForm({ user }: { user: UserData }) {
             <div
               className={`relative group w-20 h-20 rounded-xl overflow-hidden cursor-pointer transition-all ${
                 dragOverProfile ? "ring-2 ring-white/40 scale-105" : ""
-              } ${form.profileImage ? "" : "bg-zinc-800"}`}
+              } ${form.profileImage ? "" : "bg-raised"}`}
               onClick={() => profileInputRef.current?.click()}
+              role="button"
+              tabIndex={0}
+              aria-label="Upload profile image"
+              onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); profileInputRef.current?.click(); } }}
               onDrop={(e) => handleDrop(e, "profileImage")}
               onDragOver={handleDragOver}
               onDragEnter={() => setDragOverProfile(true)}
@@ -185,7 +189,7 @@ export default function SettingsForm({ user }: { user: UserData }) {
               {form.profileImage ? (
                 <img src={form.profileImage} alt="" className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-xl font-bold text-zinc-500">
+                <div className="w-full h-full flex items-center justify-center text-xl font-semibold text-muted">
                   {form.displayName[0]}
                 </div>
               )}
@@ -198,12 +202,13 @@ export default function SettingsForm({ user }: { user: UserData }) {
               </div>
             </div>
             <div className="flex items-center gap-1 mt-1">
-              <p className="text-[11px] text-zinc-600 text-center flex-1">Profile</p>
+              <p className="text-[11px] text-muted text-center flex-1">Profile</p>
               {form.profileImage && (
                 <button
                   type="button"
                   onClick={() => setForm((prev) => ({ ...prev, profileImage: "" }))}
-                  className="text-zinc-600 hover:text-zinc-400"
+                  aria-label="Remove profile image"
+                  className="icon-button !h-11 !w-11"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -215,8 +220,12 @@ export default function SettingsForm({ user }: { user: UserData }) {
             <div
               className={`relative group h-20 rounded-xl overflow-hidden cursor-pointer transition-all ${
                 dragOverBanner ? "ring-2 ring-white/40 scale-[1.01]" : ""
-              } ${form.banner ? "" : "bg-zinc-800"}`}
+              } ${form.banner ? "" : "bg-raised"}`}
               onClick={() => bannerInputRef.current?.click()}
+              role="button"
+              tabIndex={0}
+              aria-label="Upload banner image"
+              onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); bannerInputRef.current?.click(); } }}
               onDrop={(e) => handleDrop(e, "banner")}
               onDragOver={handleDragOver}
               onDragEnter={() => setDragOverBanner(true)}
@@ -226,8 +235,8 @@ export default function SettingsForm({ user }: { user: UserData }) {
                 <img src={form.banner} alt="" className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full flex flex-col items-center justify-center gap-1">
-                  <ImageIcon className="w-4 h-4 text-zinc-600" />
-                  <p className="text-[11px] text-zinc-600">Click or drag to upload</p>
+                  <ImageIcon className="w-4 h-4 text-muted" />
+                  <p className="text-[11px] text-muted">Click or drag to upload</p>
                 </div>
               )}
               <div className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -239,12 +248,13 @@ export default function SettingsForm({ user }: { user: UserData }) {
               </div>
             </div>
             <div className="flex items-center gap-1 mt-1">
-              <p className="text-[11px] text-zinc-600 flex-1">Banner</p>
+              <p className="text-[11px] text-muted flex-1">Banner</p>
               {form.banner && (
                 <button
                   type="button"
                   onClick={() => setForm((prev) => ({ ...prev, banner: "" }))}
-                  className="text-zinc-600 hover:text-zinc-400"
+                  aria-label="Remove banner image"
+                  className="icon-button !h-11 !w-11"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -253,7 +263,7 @@ export default function SettingsForm({ user }: { user: UserData }) {
           </div>
         </div>
 
-        <p className="text-[11px] text-zinc-600">JPG, PNG or WebP. Max 5MB. Click or drag and drop.</p>
+        <p className="text-[11px] text-muted">JPG, PNG or WebP. Max 5MB. Click or drag and drop.</p>
       </div>
 
       <div className="space-y-3">
@@ -261,7 +271,7 @@ export default function SettingsForm({ user }: { user: UserData }) {
 
         <div>
           <label className={labelClass}>Display Name</label>
-          <input
+          <input aria-label="Display name"
             type="text"
             value={form.displayName}
             onChange={(e) => setForm({ ...form, displayName: e.target.value })}
@@ -276,14 +286,14 @@ export default function SettingsForm({ user }: { user: UserData }) {
             type="text"
             value={user.username}
             disabled
-            className="w-full px-4 py-2.5 bg-white/[0.04] rounded-md text-sm text-zinc-600 cursor-not-allowed border-0"
+            className="w-full px-4 py-2.5 bg-white/[0.04] rounded-md text-sm text-muted cursor-not-allowed border-0"
           />
-          <p className="text-[11px] text-zinc-600 mt-1">Cannot be changed</p>
+          <p className="text-[11px] text-muted mt-1">Cannot be changed</p>
         </div>
 
         <div>
           <label className={labelClass}>Bio</label>
-          <textarea
+          <textarea aria-label="Bio"
             value={form.bio}
             onChange={(e) => setForm({ ...form, bio: e.target.value })}
             rows={3}
@@ -291,7 +301,7 @@ export default function SettingsForm({ user }: { user: UserData }) {
             className={`${inputClass} resize-none`}
             placeholder="Tell artists about your style..."
           />
-          <p className="text-[11px] text-zinc-600 mt-1">{form.bio.length}/300</p>
+          <p className="text-[11px] text-muted mt-1">{form.bio.length}/300</p>
         </div>
 
         <div>
@@ -302,10 +312,11 @@ export default function SettingsForm({ user }: { user: UserData }) {
                 key={genre}
                 type="button"
                 onClick={() => toggleGenre(genre)}
-                className={`px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
+                aria-pressed={form.genres.includes(genre)}
+                className={`filter-chip ${
                   form.genres.includes(genre)
-                    ? "bg-white text-black"
-                    : "bg-white/[0.06] text-zinc-400 hover:bg-white/[0.1] hover:text-white"
+                    ? "!border-accent-400 !bg-accent-500/15 !text-accent-300"
+                    : "bg-white/[0.06] text-secondary hover:bg-white/[0.1] hover:text-white"
                 }`}
               >
                 {genre}
@@ -322,8 +333,8 @@ export default function SettingsForm({ user }: { user: UserData }) {
           <div>
             <label className={labelClass}>Instagram</label>
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600 text-sm">@</span>
-              <input
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted text-sm">@</span>
+              <input aria-label="Instagram username"
                 type="text"
                 value={form.instagram}
                 onChange={(e) => setForm({ ...form, instagram: e.target.value })}
@@ -335,8 +346,8 @@ export default function SettingsForm({ user }: { user: UserData }) {
           <div>
             <label className={labelClass}>YouTube</label>
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600 text-sm">@</span>
-              <input
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted text-sm">@</span>
+              <input aria-label="YouTube channel"
                 type="text"
                 value={form.youtube}
                 onChange={(e) => setForm({ ...form, youtube: e.target.value })}
@@ -347,7 +358,7 @@ export default function SettingsForm({ user }: { user: UserData }) {
           </div>
           <div>
             <label className={labelClass}>Spotify Artist ID</label>
-            <input
+            <input aria-label="Spotify artist ID"
               type="text"
               value={form.spotify}
               onChange={(e) => setForm({ ...form, spotify: e.target.value })}
@@ -357,7 +368,7 @@ export default function SettingsForm({ user }: { user: UserData }) {
           </div>
           <div>
             <label className={labelClass}>Other Links</label>
-            <input
+            <input aria-label="Other links"
               type="text"
               value={form.otherLinks}
               onChange={(e) => setForm({ ...form, otherLinks: e.target.value })}
@@ -373,7 +384,7 @@ export default function SettingsForm({ user }: { user: UserData }) {
         <div className="grid sm:grid-cols-2 gap-3">
           <div>
             <label className={labelClass}>Legal Name</label>
-            <input
+            <input aria-label="Legal name"
               type="text"
               value={form.legalName}
               onChange={(e) => setForm({ ...form, legalName: e.target.value })}
@@ -383,7 +394,7 @@ export default function SettingsForm({ user }: { user: UserData }) {
           </div>
           <div>
             <label className={labelClass}>Phone</label>
-            <input
+            <input aria-label="Phone"
               type="tel"
               value={form.phone}
               onChange={(e) => setForm({ ...form, phone: e.target.value })}
@@ -402,7 +413,8 @@ export default function SettingsForm({ user }: { user: UserData }) {
         <button
           type="submit"
           disabled={saving}
-          className="flex items-center gap-2 px-6 py-2.5 bg-white text-black rounded-full text-[13px] font-semibold hover:scale-[1.02] hover:bg-zinc-100 disabled:opacity-50"
+          aria-busy={saving}
+          className="soundfuel-button"
         >
           {saving ? (
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -416,7 +428,7 @@ export default function SettingsForm({ user }: { user: UserData }) {
         <button
           type="button"
           onClick={() => router.push(`/${user.username}`)}
-          className="px-6 py-2.5 bg-white/[0.07] hover:bg-white/[0.12] rounded-full text-[13px] font-medium text-zinc-300 hover:text-white"
+          className="soundfuel-button-secondary"
         >
           View Storefront
         </button>

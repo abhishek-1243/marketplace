@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 256" width="1000" height="256" role="img" aria-labelledby="title">
+  <title id="title">Soundfuel concept D horizontal lockup (exploration: live text)</title>
+  <g id="symbol" transform="translate(4 20) scale(0.84)">
+    <g transform="translate(0 9)">
+    <path id="track" fill="#101114" d="M52.34 207.66 A107 107 0 1 1 203.66 207.66 A7 7 0 0 1 193.76 197.76 A93 93 0 1 0 62.24 197.76 A7 7 0 0 1 52.34 207.66 Z"/>
+    <path id="flame" fill="#A8452C" fill-rule="evenodd" d="M154 44 C146 72 164 96 164 136 A36 36 0 0 1 92 136 C92 116 96 100 106 84 C106 96 111 104 119 106 C119 82 140 70 154 44 Z M128 125 A11 11 0 1 0 128 147 A11 11 0 1 0 128 125 Z"/>
+  </g>
+  </g>
+  <text id="wordmark" x="250" y="158" font-family="Sora, 'Segoe UI', Arial, sans-serif" font-size="76" font-weight="500" letter-spacing="16" fill="#101114">SOUNDFUEL</text>
+</svg>

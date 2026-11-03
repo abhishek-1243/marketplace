@@ -1,15 +1,15 @@
 "use client";
 
-import BeatCard from "@/components/beats/BeatCard";
+import BeatCard, { CatalogCardItem } from "@/components/beats/BeatCard";
 
-export default function StorefrontBeats({ beats }: { beats: any[] }) {
+export default function StorefrontBeats({ beats }: { beats: CatalogCardItem[] }) {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4">
       {beats.map((beat) => (
         <BeatCard key={beat.id} beat={beat} />
       ))}
       {beats.length === 0 && (
-        <p className="col-span-full text-center text-gray-500 py-12">
+        <p className="empty-state col-span-full text-secondary">
           No sounds published yet.
         </p>
       )}

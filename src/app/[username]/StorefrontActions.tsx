@@ -18,6 +18,7 @@ export default function StorefrontActions({
   const router = useRouter();
   const [following, setFollowing] = useState(initialFollowing);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const currentUserId = session?.user.id;
   const isOwnPage = currentUserId === producerId;
@@ -28,6 +29,7 @@ export default function StorefrontActions({
       return;
     }
     setLoading(true);
+    setError("");
     try {
       const res = await fetch("/api/follow", {
         method: "POST",
@@ -35,10 +37,11 @@ export default function StorefrontActions({
         body: JSON.stringify({ userId: producerId }),
       });
       const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Could not update follow status");
       setFollowing(data.following);
       router.refresh();
     } catch (err) {
-      console.error("Follow error:", err);
+      setError(err instanceof Error ? err.message : "Could not update follow status");
     } finally {
       setLoading(false);
     }
@@ -48,7 +51,7 @@ export default function StorefrontActions({
     return (
       <button
         onClick={() => router.push("/dashboard/settings")}
-        className="px-5 py-2 bg-white/[0.07] hover:bg-white/[0.12] rounded-full text-[13px] font-medium text-zinc-300 hover:text-white"
+        className="soundfuel-button-secondary"
       >
         Edit Profile
       </button>
@@ -56,15 +59,13 @@ export default function StorefrontActions({
   }
 
   return (
-    <div className="flex gap-2">
+    <div className="flex flex-col items-start gap-2">
       <button
         onClick={handleFollow}
         disabled={loading}
-        className={`flex items-center gap-1.5 px-5 py-2 rounded-full text-[13px] font-semibold ${
-          following
-            ? "bg-white/[0.07] text-zinc-300 hover:bg-white/[0.12] hover:text-white"
-            : "bg-white text-black hover:scale-[1.02] hover:bg-zinc-100"
-        }`}
+        aria-pressed={following}
+        aria-busy={loading}
+        className={following ? "soundfuel-button-secondary" : "soundfuel-button"}
       >
         {loading ? (
           <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -75,6 +76,7 @@ export default function StorefrontActions({
         )}
         {following ? "Following" : "Follow"}
       </button>
+      {error && <p role="alert" className="text-sm text-red-300">{error}</p>}
     </div>
   );
 }

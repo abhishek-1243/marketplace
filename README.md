@@ -1,8 +1,10 @@
 # Soundfuel — curated catalog MVP
 
-A simple, dark-and-amber discovery platform for original Indian beats and sound packs. **This release is a catalog preview, not a transactional marketplace. Razorpay, checkout, payment verification, webhooks and payout configuration remain disabled.**
+A simple, graphite-and-rust discovery platform for original Indian beats and sound packs. **This release is a catalog preview, not a transactional marketplace. Razorpay, checkout, payment verification, webhooks and payout configuration remain disabled.**
 
 See [the final MVP specification](docs/MVP.md) for scope, moderation rules, routes and launch acceptance checks.
+
+New developers: read the [developer handbook](docs/DEVELOPER_HANDBOOK.md) for the repository map, application workflows, data model, APIs, configuration and maintenance guidance.
 
 ## Included
 

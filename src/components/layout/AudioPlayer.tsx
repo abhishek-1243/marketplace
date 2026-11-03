@@ -22,6 +22,8 @@ export default function AudioPlayer() {
     progress,
     duration,
     volume,
+    queue,
+    queueIndex,
     toggle,
     pause,
     setProgress,
@@ -82,12 +84,12 @@ export default function AudioPlayer() {
         onEnded={next}
         onError={() => { pause(); setPlaybackError("Preview unavailable. Please try again later."); }}
       />
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-zinc-950 border-t border-white/[0.06]">
-        {playbackError && <p role="status" className="px-4 pt-2 text-center text-xs text-amber-200">{playbackError}</p>}
-        <div className="max-w-[1400px] mx-auto px-4">
-          <div className="flex items-center h-[72px] gap-4">
-            <div className="flex items-center gap-3 w-[110px] sm:w-[240px] shrink-0">
-              <div className="w-14 h-14 rounded-md bg-zinc-800 overflow-hidden shrink-0">
+      <div className="glass-chrome player-chrome" role="region" aria-label="Sound preview player">
+        {playbackError && <p role="status" className="px-4 pt-2 text-center text-xs text-accent-200">{playbackError}</p>}
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex min-h-[88px] items-center gap-3 py-3 sm:gap-6">
+            <div className="flex w-[112px] shrink-0 items-center gap-2 sm:w-[200px] sm:gap-3 lg:w-[240px]">
+              <div className="h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-raised sm:h-14 sm:w-14">
                 {currentTrack.coverArt && (
                   <img
                     src={currentTrack.coverArt}
@@ -97,12 +99,12 @@ export default function AudioPlayer() {
                 )}
               </div>
               <div className="min-w-0">
-                <p className="text-[13px] font-medium truncate text-white">
+                <Link href={`/sounds/${currentTrack.beatId}`} className="block truncate rounded-sm text-[13px] font-medium text-foreground hover:text-accent-300">
                   {currentTrack.title}
-                </p>
+                </Link>
                 <Link
                   href={`/${currentTrack.producerUsername}`}
-                  className="text-[11px] text-zinc-400 hover:text-white hover:underline truncate block"
+                  className="text-[11px] text-secondary hover:text-white hover:underline truncate block"
                 >
                   {currentTrack.producer}
                 </Link>
@@ -110,35 +112,38 @@ export default function AudioPlayer() {
             </div>
 
             <div className="min-w-0 flex-1 flex flex-col items-center gap-1.5 max-w-[600px] mx-auto">
-              <div className="flex items-center gap-5">
+              <div className="flex items-center gap-0 sm:gap-3">
                 <button
                   onClick={previous}
+                  disabled={queueIndex <= 0}
                   aria-label="Previous sound"
-                  className="p-1 text-zinc-400 hover:text-white"
+                  className="icon-button"
                 >
                   <SkipBack className="w-4 h-4" />
                 </button>
                 <button
                   onClick={toggle}
                   aria-label={isPlaying ? "Pause preview" : "Play preview"}
-                  className="w-8 h-8 rounded-full bg-white flex items-center justify-center hover:scale-105"
+                  aria-pressed={isPlaying}
+                  className="player-play"
                 >
                   {isPlaying ? (
-                    <Pause className="w-4 h-4 text-black" />
+                    <Pause className="h-4 w-4" fill="currentColor" />
                   ) : (
-                    <Play className="w-4 h-4 text-black ml-0.5" />
+                    <Play className="ml-0.5 h-4 w-4" fill="currentColor" />
                   )}
                 </button>
                 <button
                   onClick={next}
+                  disabled={queueIndex >= queue.length - 1}
                   aria-label="Next sound"
-                  className="p-1 text-zinc-400 hover:text-white"
+                  className="icon-button"
                 >
                   <SkipForward className="w-4 h-4" />
                 </button>
               </div>
               <div className="flex items-center gap-2 w-full">
-                <span className="text-[11px] text-zinc-500 w-10 text-right tabular-nums select-none">
+                <span className="text-[11px] text-muted w-10 text-right tabular-nums select-none">
                   {formatTime(progress)}
                 </span>
                 <input
@@ -154,16 +159,16 @@ export default function AudioPlayer() {
                   }}
                   className="min-w-0 flex-1 h-1 cursor-pointer"
                 />
-                <span className="text-[11px] text-zinc-500 w-10 tabular-nums select-none">
+                <span className="text-[11px] text-muted w-10 tabular-nums select-none">
                   {formatTime(duration)}
                 </span>
               </div>
             </div>
 
-            <div className="hidden sm:flex items-center gap-3 w-[240px] justify-end">
+            <div className="hidden w-[240px] shrink-0 items-center justify-end gap-3 lg:flex">
               <Link
                 href={`/sounds/${currentTrack.beatId}`}
-                className="px-4 py-1.5 bg-amber-300 text-black rounded-full text-[11px] font-semibold hover:bg-amber-200 whitespace-nowrap"
+                className="soundfuel-button-secondary whitespace-nowrap !px-4 !text-xs"
               >
                 View sound
               </Link>
@@ -171,7 +176,7 @@ export default function AudioPlayer() {
                 <button
                   onClick={() => setVolume(volume === 0 ? 0.8 : 0)}
                   aria-label={volume === 0 ? "Unmute" : "Mute"}
-                  className="p-1 text-zinc-400 hover:text-white"
+                  className="icon-button"
                 >
                   <VolumeIcon className="w-4 h-4" />
                 </button>

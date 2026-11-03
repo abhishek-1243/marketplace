@@ -15,6 +15,6 @@ export default function PayoutAccountForm({ userId, initialValue }: { userId: st
     if (response.ok) router.refresh();
   }}>
     <input value={value} onChange={(event) => setValue(event.target.value)} placeholder="acc_…" pattern="acc_[A-Za-z0-9]+" required className="soundfuel-input py-1.5" aria-label="Razorpay linked account ID" />
-    <button disabled={busy} className="rounded-full bg-amber-300 px-3 text-xs font-bold text-black disabled:opacity-50">{busy ? "…" : "Save"}</button>
+    <button disabled={busy} aria-busy={busy} className="soundfuel-button !px-4 !text-xs">{busy ? "Saving…" : "Save"}</button>
   </form>;
 }
