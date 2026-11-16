@@ -21,10 +21,15 @@ async function check(name: string, run: (tx: Prisma.TransactionClient, producerI
     });
   } catch (error) {
     if (error !== rollback) {
-      if (!(error instanceof Prisma.PrismaClientKnownRequestError)) throw error;
-      const constraintError = ["P2003", "P2004"].includes(error.code) || (error.code === "P2010" && ["23503", "23514"].includes(String(error.meta?.code)));
-      if (!constraintError) throw error;
-      rejected = true;
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        const constraintError = ["P2003", "P2004"].includes(error.code) || (error.code === "P2010" && ["23503", "23514"].includes(String(error.meta?.code)));
+        if (!constraintError) throw error;
+        rejected = true;
+      } else if (error instanceof Prisma.PrismaClientUnknownRequestError && error.message.includes("violates check constraint")) {
+        rejected = true;
+      } else {
+        throw error;
+      }
     }
   }
   assert.equal(rejected, invalid, name);
