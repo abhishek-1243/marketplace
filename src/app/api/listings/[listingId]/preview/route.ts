@@ -5,11 +5,11 @@ import { publicCatalogWhere } from "@/lib/catalog";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
-export async function GET(_req: NextRequest, context: { params: Promise<{ beatId: string }> }) {
-  const { beatId } = await context.params;
+export async function GET(_req: NextRequest, context: { params: Promise<{ listingId: string }> }) {
+  const { listingId } = await context.params;
   const session = await getServerSession(authOptions);
-  const beat = await prisma.beat.findFirst({
-    where: { id: beatId, ...(session?.user.role === "ADMIN" ? {} : session ? { OR: [publicCatalogWhere, { producerId: session.user.id }] } : publicCatalogWhere) },
+  const beat = await prisma.listing.findFirst({
+    where: { id: listingId, ...(session?.user.role === "ADMIN" ? {} : session ? { OR: [publicCatalogWhere, { producerId: session.user.id }] } : publicCatalogWhere) },
     select: { assets: { where: { type: "PREVIEW" }, take: 1, select: { objectKey: true } } },
   });
   const asset = beat?.assets[0];

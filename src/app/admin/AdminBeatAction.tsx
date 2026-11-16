@@ -2,13 +2,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function AdminBeatAction({ beatId, status, rightsStatus, discoveryTier, reviewFeedback }: { beatId: string; status: string; rightsStatus: string; discoveryTier: string; reviewFeedback: string | null }) {
+export default function AdminBeatAction({ listingId, status, rightsStatus, discoveryTier, reviewFeedback }: { listingId: string; status: string; rightsStatus: string; discoveryTier: string; reviewFeedback: string | null }) {
   const router = useRouter(); const [busy, setBusy] = useState(false); const [error, setError] = useState("");
   return <form className="mt-5 grid gap-3 sm:grid-cols-3" onSubmit={async (event) => {
     event.preventDefault(); setBusy(true); setError("");
     try {
       const body = Object.fromEntries(new FormData(event.currentTarget));
-      const response = await fetch(`/api/admin/beats/${beatId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      const response = await fetch(`/api/admin/listings/${listingId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const result = await response.json(); if (!response.ok) throw new Error(result.error);
       router.refresh();
     } catch (err) { setError(err instanceof Error ? err.message : "Could not save review"); } finally { setBusy(false); }

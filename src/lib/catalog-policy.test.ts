@@ -28,8 +28,10 @@ test("readiness measures completeness without plays or sales bias", () => {
 test("sound packs cannot reuse a beat package or redistribute licensed samples", () => {
   assert.equal(listingSchema.safeParse(listing).success, true);
   assert.equal(listingSchema.safeParse({ ...listing, kind: "SOUND_PACK", sampleCount: 50 }).success, false);
-  const pack = { ...listing, kind: "SOUND_PACK", sampleCount: 50, assets: [{ type: "PREVIEW", objectKey: "beats/preview/producer/demo.mp3" }, { type: "PACK", objectKey: "beats/pack/producer/sounds.zip" }] };
+  const pack = { ...listing, bpm: undefined, musicalKey: undefined, premiumPrice: undefined, exclusivePrice: undefined, kind: "SOUND_PACK", sampleCount: 50, assets: [{ type: "PREVIEW", objectKey: "beats/preview/producer/demo.mp3" }, { type: "PACK", objectKey: "beats/pack/producer/sounds.zip" }] };
   assert.equal(listingSchema.safeParse(pack).success, true);
+  assert.equal(listingSchema.safeParse({ ...pack, exclusivePrice: 25000 }).success, false);
+  assert.equal(listingSchema.safeParse({ ...listing, sampleCount: 50 }).success, false);
   assert.equal(listingSchema.safeParse({ ...pack, sampleDisclosure: "ROYALTY_FREE_OR_LICENSED", rightsEvidence: "Sample library licence for song production" }).success, false);
 });
 

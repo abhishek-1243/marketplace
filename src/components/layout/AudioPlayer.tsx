@@ -11,6 +11,7 @@ import {
   Volume1,
 } from "lucide-react";
 import Link from "next/link";
+import { listingHref } from "@/lib/listing-kind";
 import { useAudioPlayer } from "@/store/audio-player";
 
 export default function AudioPlayer() {
@@ -86,7 +87,7 @@ export default function AudioPlayer() {
       />
       <div className="glass-chrome player-chrome" role="region" aria-label="Sound preview player">
         {playbackError && <p role="status" className="px-4 pt-2 text-center text-xs text-accent-200">{playbackError}</p>}
-        <div className="max-w-7xl mx-auto px-4">
+        <div className="site-shell">
           <div className="flex min-h-[88px] items-center gap-3 py-3 sm:gap-6">
             <div className="flex w-[112px] shrink-0 items-center gap-2 sm:w-[200px] sm:gap-3 lg:w-[240px]">
               <div className="h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-raised sm:h-14 sm:w-14">
@@ -99,7 +100,7 @@ export default function AudioPlayer() {
                 )}
               </div>
               <div className="min-w-0">
-                <Link href={`/sounds/${currentTrack.beatId}`} className="block truncate rounded-sm text-[13px] font-medium text-foreground hover:text-accent-300">
+                <Link href={listingHref({ id: currentTrack.listingId, kind: currentTrack.kind })} className="block truncate rounded-sm text-[13px] font-medium text-foreground hover:text-accent-300">
                   {currentTrack.title}
                 </Link>
                 <Link
@@ -167,7 +168,7 @@ export default function AudioPlayer() {
 
             <div className="hidden w-[240px] shrink-0 items-center justify-end gap-3 lg:flex">
               <Link
-                href={`/sounds/${currentTrack.beatId}`}
+                href={listingHref({ id: currentTrack.listingId, kind: currentTrack.kind })}
                 className="soundfuel-button-secondary whitespace-nowrap !px-4 !text-xs"
               >
                 View sound

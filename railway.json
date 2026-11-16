@@ -1,0 +1,8 @@
+{
+  "$schema": "https://railway.com/railway.schema.json",
+  "deploy": {
+    "preDeployCommand": ["node node_modules/prisma/build/index.js migrate deploy"],
+    "healthcheckPath": "/api/ready",
+    "healthcheckTimeout": 120
+  }
+}

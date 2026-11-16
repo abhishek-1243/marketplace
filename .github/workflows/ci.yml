@@ -47,6 +47,7 @@ jobs:
       - run: npm run db:generate
       - run: npx prisma validate
       - run: npm run db:deploy
+      - run: npm run test:db
       - run: npm run typecheck
       - run: npm run lint
       - run: npm test

@@ -9,9 +9,10 @@ export async function fulfillOrder(input: {
   const result = await prisma.$transaction(async (tx) => {
     const order = await tx.order.findUnique({
       where: { providerOrderId: input.providerOrderId },
-      include: { beat: true, licensePlan: true, artist: true },
+      include: { item: { include: { listing: true, beatLicensePlan: true } }, artist: true },
     });
     if (!order) throw new Error("Order not found");
+    if (!order.item) throw new Error("Order item not found");
     if (order.status === "PAID") return order;
     if (order.status !== "PENDING_PAYMENT") throw new Error("Order cannot be fulfilled");
 
@@ -35,15 +36,16 @@ export async function fulfillOrder(input: {
           },
         },
       },
-      include: { artist: true, beat: true },
+      include: { artist: true, item: { include: { listing: true } } },
     });
 
-    if (order.licensePlan.isExclusive) {
+    if (order.item.beatLicensePlan?.isExclusive) {
       const updated = await tx.beat.updateMany({
-        where: { id: order.beatId, exclusiveOrderId: order.id, exclusiveState: "RESERVED" },
-        data: { exclusiveState: "SOLD", status: "SOLD", exclusiveReservedUntil: null },
+        where: { listingId: order.item.listingId, exclusiveOrderId: order.id, exclusiveState: "RESERVED" },
+        data: { exclusiveState: "SOLD", exclusiveReservedUntil: null },
       });
       if (updated.count !== 1) throw new Error("Exclusive reservation was lost");
+      await tx.listing.update({ where: { id: order.item.listingId }, data: { status: "SOLD" } });
     }
 
     await tx.auditLog.create({
@@ -61,7 +63,7 @@ export async function fulfillOrder(input: {
   void sendPurchaseEmail({
     to: result.artist.email,
     buyerName: result.artist.displayName,
-    beatTitle: result.beat.title,
+    beatTitle: result.item!.listing.title,
     orderId: result.id,
   }).catch((error) => console.error("Purchase email failed", error));
 
@@ -70,12 +72,12 @@ export async function fulfillOrder(input: {
 
 export async function releaseExclusiveReservation(orderId: string) {
   await prisma.$transaction(async (tx) => {
-    const order = await tx.order.findUnique({ where: { id: orderId }, include: { licensePlan: true } });
+    const order = await tx.order.findUnique({ where: { id: orderId }, include: { item: { include: { beatLicensePlan: true } } } });
     if (!order || order.status === "PAID") return;
     await tx.order.update({ where: { id: order.id }, data: { status: "CANCELLED" } });
-    if (!order.licensePlan.isExclusive) return;
+    if (!order.item?.beatLicensePlan?.isExclusive) return;
     await tx.beat.updateMany({
-      where: { id: order.beatId, exclusiveOrderId: order.id, exclusiveState: "RESERVED" },
+      where: { listingId: order.item.listingId, exclusiveOrderId: order.id, exclusiveState: "RESERVED" },
       data: {
         exclusiveState: "AVAILABLE",
         exclusiveOrderId: null,

@@ -4,14 +4,14 @@ import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
-export default function SaveSoundButton({ beatId, initialSaved = false }: { beatId: string; initialSaved?: boolean }) {
+export default function SaveSoundButton({ listingId, initialSaved = false }: { listingId: string; initialSaved?: boolean }) {
   const { data: session } = useSession(); const router = useRouter();
   const [saved, setSaved] = useState(initialSaved); const [busy, setBusy] = useState(false); const [error, setError] = useState("");
   return <div><button type="button" aria-pressed={saved} aria-busy={busy} disabled={busy} className="soundfuel-button-secondary" onClick={async () => {
     if (!session) { router.push("/login"); return; }
     setBusy(true); setError("");
     try {
-      const response = await fetch("/api/favorites", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ beatId }) });
+      const response = await fetch("/api/favorites", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ listingId }) });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error);
       setSaved(result.favorited); router.refresh();

@@ -81,11 +81,16 @@ export default function UploadPage() {
         coverArt = uploaded.url;
       }
       setStatus("Saving your listing…");
-      const response = await fetch("/api/beats", {
+      const response = await fetch("/api/listings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
+          bpm: form.kind === "BEAT" ? form.bpm : undefined,
+          musicalKey: form.kind === "BEAT" ? form.musicalKey : undefined,
+          premiumPrice: form.kind === "BEAT" ? form.premiumPrice : undefined,
+          exclusivePrice: form.kind === "BEAT" ? form.exclusivePrice : undefined,
+          sampleCount: form.kind === "SOUND_PACK" ? form.sampleCount : undefined,
           tags: form.tags.split(",").map((tag) => tag.trim()).filter(Boolean),
           coverArt,
           assets,
@@ -93,7 +98,7 @@ export default function UploadPage() {
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Could not publish beat");
-      router.push("/dashboard");
+      router.push(`/dashboard?kind=${form.kind}`);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed");
@@ -123,10 +128,10 @@ export default function UploadPage() {
           <div className="grid sm:grid-cols-3 gap-3">
             <div><label className={labelClass}>Genre</label><select aria-label="Genre" value={form.genre} onChange={(e) => setForm({ ...form, genre: e.target.value })} className={inputClass}>{GENRES.map((value) => <option key={value}>{value}</option>)}</select></div>
             <div><label className={labelClass}>Mood</label><select aria-label="Mood" value={form.mood} onChange={(e) => setForm({ ...form, mood: e.target.value })} className={inputClass}>{MOODS.map((value) => <option key={value}>{value}</option>)}</select></div>
-            <div><label className={labelClass}>Key</label><select aria-label="Musical key" value={form.musicalKey} onChange={(e) => setForm({ ...form, musicalKey: e.target.value })} className={inputClass}>{KEYS.map((value) => <option key={value}>{value}</option>)}</select></div>
+            {form.kind === "BEAT" && <div><label className={labelClass}>Key</label><select aria-label="Musical key" value={form.musicalKey} onChange={(e) => setForm({ ...form, musicalKey: e.target.value })} className={inputClass}>{KEYS.map((value) => <option key={value}>{value}</option>)}</select></div>}
           </div>
           <div className="grid sm:grid-cols-[120px_1fr] gap-3">
-            <div><label className={labelClass}>BPM</label><input aria-label="BPM" type="number" min={40} max={300} value={form.bpm} onChange={(e) => setForm({ ...form, bpm: Number(e.target.value) })} className={inputClass} /></div>
+            {form.kind === "BEAT" && <div><label className={labelClass}>BPM</label><input aria-label="BPM" type="number" min={40} max={300} value={form.bpm} onChange={(e) => setForm({ ...form, bpm: Number(e.target.value) })} className={inputClass} /></div>}
             <div><label className={labelClass}>Tags</label><input aria-label="Tags" value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} className={inputClass} placeholder="dark, trap, 808" /></div>
           </div>
           <div><label className={labelClass}>Description</label><textarea aria-label="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className={`${inputClass} min-h-24 resize-y`} required minLength={40} maxLength={2000} placeholder="Describe the recording, contents, musicians and intended use." /></div>

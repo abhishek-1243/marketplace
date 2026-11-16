@@ -1,64 +1,37 @@
+import Link from "next/link";
 import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { redirect } from "next/navigation";
-import { Music } from "lucide-react";
 import LibraryBeatRow from "./LibraryBeatRow";
 import HomeBeats from "@/components/home/HomeBeats";
 import { catalogSelect, publicCatalogWhere, serializeCatalogItem } from "@/lib/catalog";
+import { catalogKind } from "@/lib/listing-kind";
 
-export default async function LibraryPage() {
+export const dynamic = "force-dynamic";
+export default async function LibraryPage({ searchParams }: { searchParams: Promise<{ kind?: string }> }) {
   const session = await getServerSession(authOptions);
   if (!session) redirect("/login");
-
-  const userId = session.user.id;
-  const favorites = await prisma.favorite.findMany({ where: { userId, beat: publicCatalogWhere }, orderBy: { createdAt: "desc" }, take: 100, select: { beat: { select: catalogSelect } } });
-
+  const kind = catalogKind((await searchParams).kind);
+  const label = kind === "BEAT" ? "beats" : "sound packs";
+  const favorites = await prisma.favorite.findMany({ where: { userId: session.user.id, listing: { ...publicCatalogWhere, kind } }, orderBy: { createdAt: "desc" }, take: 100, select: { listing: { select: catalogSelect } } });
   const orders = await prisma.order.findMany({
-    where: { artistId: userId, status: "PAID", entitlement: { active: true } },
-    include: {
-      beat: {
-        include: {
-          producer: { select: { displayName: true, username: true } },
-          assets: { where: { type: "PREVIEW" }, select: { id: true } },
-        },
-      },
-      licensePlan: { select: { type: true, price: true, includesMp3: true, includesWav: true, includesStems: true } },
-      agreement: { select: { id: true, contentHash: true } },
-    },
+    where: { artistId: session.user.id, status: "PAID", entitlement: { active: true }, item: { listing: { kind } } },
+    include: { item: { include: { listing: { include: { producer: { select: { displayName: true, username: true } }, assets: { where: { type: "PREVIEW" }, select: { id: true } } } }, beatLicensePlan: true, soundPackLicensePlan: true } }, agreement: { select: { id: true, contentHash: true } } },
     orderBy: { createdAt: "desc" },
   });
-
-  const serializedOrders = orders.map((o: any) => ({
-    ...o,
-    beat: {
-      ...o.beat,
-      previewUrl: o.beat.assets.length ? `/api/beats/${o.beat.id}/preview` : null,
-      assets: undefined,
-    },
-    createdAt: o.createdAt.toISOString(),
-  }));
-
-  return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-      <h1 className="text-2xl font-semibold tracking-tight mb-2">Saved sounds</h1>
-      <p className="text-sm text-muted mb-6">Keep your next idea close. Save beats and packs from their detail pages.</p>
-      <HomeBeats beats={favorites.map(({ beat }) => serializeCatalogItem(beat))} />
-      <h2 className="mt-10 text-lg font-semibold">Licensed library</h2>
-
-      {orders.length === 0 ? (
-        <div className="text-center py-20">
-          <Music className="w-10 h-10 mx-auto mb-3 text-zinc-700" />
-          <p className="text-[15px] font-medium text-secondary">No licensed beats yet</p>
-          <p className="text-[13px] text-muted mt-1">Purchases and production-file downloads open in a later release.</p>
-        </div>
-      ) : (
-        <div className="space-y-1">
-          {serializedOrders.map((order: any) => (
-            <LibraryBeatRow key={order.id} order={order} />
-          ))}
-        </div>
-      )}
-    </div>
-  );
+  return <div className="site-shell py-8">
+    <nav className="mb-6 flex gap-3" aria-label="Library product type"><Link href="/library?kind=BEAT" className="filter-chip" aria-current={kind === "BEAT" ? "page" : undefined}>Beats</Link><Link href="/library?kind=SOUND_PACK" className="filter-chip" aria-current={kind === "SOUND_PACK" ? "page" : undefined}>Sound packs</Link></nav>
+    <h1 className="mb-2 text-2xl font-semibold">Saved {label}</h1>
+    <HomeBeats beats={favorites.map(({ listing }) => serializeCatalogItem(listing))} />
+    <h2 className="mt-10 text-lg font-semibold">Licensed {label}</h2>
+    {!orders.length && <p className="py-12 text-sm text-muted">No licensed {label} yet. Purchases open in a later release.</p>}
+    {orders.map((order) => {
+      if (!order.item) return null;
+      const { listing, beatLicensePlan } = order.item;
+      if (listing.kind === "SOUND_PACK") return <article key={order.id} className="surface mt-4 rounded-xl p-5"><p>{listing.title}</p><p className="mt-2 text-xs text-muted">Sound pack · Downloads open in a later release.</p></article>;
+      if (!beatLicensePlan) return null;
+      return <LibraryBeatRow key={order.id} order={{ id: order.id, createdAt: order.createdAt.toISOString(), beat: { ...listing, previewUrl: listing.assets.length ? `/api/listings/${listing.id}/preview` : null }, licensePlan: { ...beatLicensePlan, price: order.item.price }, agreement: order.agreement }} />;
+    })}
+  </div>;
 }

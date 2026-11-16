@@ -28,7 +28,7 @@ interface LibraryBeatRowProps {
 
 export default function LibraryBeatRow({ order }: LibraryBeatRowProps) {
   const { currentTrack, isPlaying, setTrack, toggle } = useAudioPlayer();
-  const isCurrentTrack = currentTrack?.beatId === order.beat.id;
+  const isCurrentTrack = currentTrack?.listingId === order.beat.id;
 
   const handlePlay = () => {
     if (isCurrentTrack) {
@@ -42,7 +42,7 @@ export default function LibraryBeatRow({ order }: LibraryBeatRowProps) {
         coverArt: order.beat.coverArt || "",
         previewUrl: order.beat.previewUrl || "",
         price: order.licensePlan.price,
-        beatId: order.beat.id,
+        listingId: order.beat.id,
       };
       setTrack(track);
     }

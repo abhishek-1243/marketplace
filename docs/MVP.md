@@ -54,7 +54,7 @@ Version: `readiness-v1`. This score measures listing completeness only. It canno
 - Private S3 files and expiring preview URLs; conditional signed PUTs prevent overwriting existing objects. Profile/cover CDN is a separate public prefix.
 - Payment activation requires both `PAYMENTS_ENABLED` and `COMMERCE_LAUNCH_APPROVED`; both default false. Payment POST endpoints return `503 / PAYMENTS_DISABLED` before mutations. Existing paid entitlements retain access; no new pack download entitlement is exposed.
 
-Key routes: `/`, `/search`, `/sounds/[soundId]`, `/[username]`, `/apply`, `/onboarding`, `/library`, `/dashboard`, `/dashboard/upload`, `/dashboard/settings`, `/admin`. Relevant APIs: `/api/beats`, `/api/beats/[beatId]` (owner metadata), `/api/beats/[beatId]/preview`, `/api/assets/upload-url`, `/api/producer-application`, `/api/admin/users/[userId]/producer-status`, `/api/admin/beats/[beatId]`, `/api/health`, `/api/ready`.
+Key routes: `/`, `/beats`, `/sound-packs`, `/beats/[listingId]`, `/sound-packs/[listingId]`, `/[username]`, `/apply`, `/onboarding`, `/library`, `/dashboard`, `/dashboard/upload`, `/dashboard/settings`, `/admin`. Relevant APIs: `/api/listings`, `/api/listings/[listingId]` (owner metadata), `/api/listings/[listingId]/preview`, `/api/assets/upload-url`, `/api/producer-application`, `/api/admin/users/[userId]/producer-status`, `/api/admin/listings/[listingId]`, `/api/health`, `/api/ready`.
 
 ## Migration and launch checklist
 

@@ -27,6 +27,8 @@
     --accent-pressed: 121 48 32;
     --control-radius: .5rem;
     --control-size: 2.75rem;
+    --site-max-width: 112rem;
+    --site-gutter: clamp(1.25rem, 3vw, 3rem);
     --feedback-duration: 140ms;
     --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
     --bg-secondary: 220 11% 11%;
@@ -133,7 +135,9 @@
 /* Split editorial layout; every page inherits the graphite-and-rust tokens. */
 .landing-page { background: rgb(var(--canvas)); color: rgb(var(--foreground)); }
 body:has(.landing-page) #main-content { padding-bottom: 0; }
-.landing-container { width: min(100%, 80rem); margin-inline: auto; padding-inline: clamp(1.25rem, 4vw, 3rem); }
+.site-shell, .landing-container { width: 100%; max-width: var(--site-max-width); margin-inline: auto; padding-inline: var(--site-gutter); }
+/* Keep sparse collections compact; add columns rather than oversized artwork. */
+.catalog-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem .75rem; }
 .landing-hero { background: rgb(var(--canvas)); }
 .landing-hero-grid { display: grid; align-items: center; gap: 2.5rem; padding-block: clamp(2.5rem, 5vw, 5rem); }
 .landing-hero-copy { min-width: 0; }
@@ -154,7 +158,7 @@ body:has(.landing-page) #main-content { padding-bottom: 0; }
 .landing-artwork-link:hover, .landing-listen-button:hover:not(:disabled) { background: rgb(var(--accent-hover)); }
 .landing-listen { display: flex; align-items: center; gap: .875rem; min-width: 0; width: 100%; }
 .landing-listen-producer { display: block; font-size: .75rem; color: rgb(var(--secondary)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.landing-trending { min-width: 0; width: 100%; max-width: 34rem; justify-self: end; padding: clamp(1rem, 2.5vw, 2rem); border: 1px solid rgb(var(--line)); border-radius: .875rem; background: rgb(var(--panel)); }
+.landing-trending { min-width: 0; width: 100%; max-width: 40rem; justify-self: end; padding: clamp(1rem, 2.5vw, 2rem); border: 1px solid rgb(var(--line)); border-radius: .875rem; background: rgb(var(--panel)); }
 .landing-trending-heading h2 { display: flex; align-items: center; gap: .625rem; font-size: 1.25rem; font-weight: 500; }
 .landing-trending-heading h2 svg { color: rgb(var(--accent-light)); }
 .landing-trending-heading p { margin-top: .5rem; font-size: .75rem; color: rgb(var(--secondary)); }
@@ -199,24 +203,19 @@ body:has(.landing-page) #main-content { padding-bottom: 0; }
 .preview-tools { display: grid; gap: 1rem; }
 .preview-tools input { max-width: 30rem; }
 @media (min-width: 768px) { .preview-tools { grid-template-columns: minmax(0, 1fr) auto; align-items: end; } }
-@media (min-width: 960px) and (max-width: 1279px) { .primary-navigation .nav-link { padding-inline: .5rem; font-size: .75rem; } }
-@media (min-width: 960px) {
-  header[data-authenticated="false"] .primary-navigation,
-  header[data-authenticated="false"] .header-account { display: flex; }
-  header[data-authenticated="false"] .header-search { display: block; }
-  header[data-authenticated="false"] .header-compact { display: none; }
-}
 @media (min-width: 640px) {
-  .landing-collection > .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .catalog-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2rem 1.25rem; }
 }
 @media (min-width: 768px) {
   .landing-hero-grid { grid-template-columns: 1.05fr 1fr; gap: clamp(2rem, 4vw, 4rem); }
   .landing-creators { grid-template-columns: .8fr 1.2fr; align-items: center; gap: 3rem; }
   .landing-creators-copy { border-left: 1px solid rgb(var(--line)); padding-left: 3rem; }
 }
-@media (min-width: 900px) {
-  .landing-collection > .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (min-width: 1024px) {
+  .catalog-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2.5rem 1.5rem; }
 }
+@media (min-width: 1280px) { .catalog-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+@media (min-width: 1600px) { .catalog-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
 @media (prefers-reduced-motion: reduce) {
   .landing-quiet-link:active, .landing-text-link:active { transform: none; }
 }

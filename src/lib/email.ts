@@ -18,7 +18,8 @@ export async function sendPurchaseEmail(input: {
 }) {
   if (!env.PAYMENTS_ENABLED || !env.AWS_SES_FROM_EMAIL) return;
   await ses.send(new SendEmailCommand({
-    Source: env.AWS_SES_FROM_EMAIL,
+    Source: `Soundfuel Orders <${env.AWS_SES_FROM_EMAIL}>`,
+    ReplyToAddresses: [env.NEXT_PUBLIC_SUPPORT_EMAIL],
     Destination: { ToAddresses: [input.to] },
     Message: {
       Subject: { Data: `Your Soundfuel licence for ${input.beatTitle}` },

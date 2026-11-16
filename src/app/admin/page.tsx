@@ -17,11 +17,11 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   const page = Math.floor(Math.max(1, Math.min(1000, Number(filters.page) || 1)));
   const [applications, listed, reviews, items, producers, total] = await Promise.all([
     prisma.user.count({ where: { role: "PRODUCER", producerStatus: "APPLIED" } }),
-    prisma.beat.count({ where: marketplaceWhere }),
-    prisma.beat.count({ where: { rightsStatus: "REVIEW_REQUIRED" } }),
-    prisma.beat.findMany({ orderBy: [{ reviewedAt: { sort: "asc", nulls: "first" } }, { createdAt: "desc" }, { id: "desc" }], skip: (page - 1) * 20, take: 20, include: { producer: { select: { username: true, producerStatus: true } }, assets: { select: { type: true, sizeBytes: true } } } }),
+    prisma.listing.count({ where: marketplaceWhere }),
+    prisma.listing.count({ where: { rightsStatus: "REVIEW_REQUIRED" } }),
+    prisma.listing.findMany({ orderBy: [{ reviewedAt: { sort: "asc", nulls: "first" } }, { createdAt: "desc" }, { id: "desc" }], skip: (page - 1) * 20, take: 20, include: { producer: { select: { username: true, producerStatus: true } }, assets: { select: { type: true, sizeBytes: true } } } }),
     prisma.user.findMany({ where: { role: "PRODUCER" }, orderBy: [{ producerReviewedAt: { sort: "asc", nulls: "first" } }, { createdAt: "desc" }, { id: "desc" }], skip: (page - 1) * 20, take: 20, select: { id: true, username: true, displayName: true, producerStatus: true, portfolioUrl: true, applicationNote: true, payoutAccountId: true } }),
-    prisma.beat.count(),
+    prisma.listing.count(),
   ]);
   return <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6"><p className="text-xs uppercase tracking-widest text-accent-300">Catalog operations</p><h1 className="mt-2 text-3xl font-semibold">Curate the founding collection</h1>
     <p className="mt-3 text-sm text-secondary">Payments {env.PAYMENTS_ENABLED ? "enabled" : "disabled"}. Review producers, resolve rights questions and select marketplace listings. Readiness scores measure completeness, not musical quality or legal clearance.</p>
@@ -32,8 +32,8 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       <p className="mt-3 whitespace-pre-wrap text-sm text-secondary">{item.description}</p><p className="mt-3 text-xs text-muted">{item.region} · {item.instruments} · AI: {item.aiDisclosure} · Samples: {item.sampleDisclosure} · Producer: {item.producer.producerStatus}</p>
       <p className="mt-2 whitespace-pre-wrap rounded-lg bg-black/30 p-3 text-xs text-secondary">Private source / permission notes: {item.rightsEvidence || "No additional evidence supplied."}</p>
       <p className="mt-2 text-xs text-muted">Files: {item.assets.map((asset) => `${asset.type} (${Math.ceil(asset.sizeBytes / 1024)} KB)`).join(" · ")}</p>
-      {item.assets.some((asset) => asset.type === "PREVIEW") && <audio aria-label={`Review ${item.title}`} className="mt-4 w-full" controls preload="none" src={`/api/beats/${item.id}/preview`} />}
-      <AdminBeatAction beatId={item.id} status={item.status} rightsStatus={item.rightsStatus} discoveryTier={item.discoveryTier} reviewFeedback={item.reviewFeedback} />
+      {item.assets.some((asset) => asset.type === "PREVIEW") && <audio aria-label={`Review ${item.title}`} className="mt-4 w-full" controls preload="none" src={`/api/listings/${item.id}/preview`} />}
+      <AdminBeatAction listingId={item.id} status={item.status} rightsStatus={item.rightsStatus} discoveryTier={item.discoveryTier} reviewFeedback={item.reviewFeedback} />
     </article>)}</div></section>
     <nav className="mt-8 flex justify-center gap-5 text-sm" aria-label="Review pages">{page > 1 && <Link href={`/admin?page=${page - 1}`}>← Previous</Link>}<span className="text-muted">Page {page}</span>{items.length === 20 || producers.length === 20 || page * 20 < total ? <Link href={`/admin?page=${page + 1}`}>Next →</Link> : null}</nav>
   </div>;

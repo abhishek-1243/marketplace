@@ -12,7 +12,7 @@ import { env } from "@/lib/env";
 import { publicCatalogWhere } from "@/lib/catalog";
 
 const schema = z.object({
-  beatId: z.string().cuid(),
+  listingId: z.string().cuid(),
   licensePlanId: z.string().cuid(),
   acceptedAgreement: z.literal(true),
 });
@@ -26,30 +26,31 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) return NextResponse.json({ error: "Invalid checkout request" }, { status: 400 });
   const meta = requestMetadata(req);
 
-  let order: { id: string; totalAmount: number; producerAmount: number; beatId: string; payoutAccountId: string };
+  let order: { id: string; totalAmount: number; producerAmount: number; listingId: string; payoutAccountId: string };
   try {
     order = await prisma.$transaction(async (tx) => {
-    const plan = await tx.licensePlan.findFirst({
+    const plan = await tx.beatLicensePlan.findFirst({
       where: {
         id: parsed.data.licensePlanId,
-        beatId: parsed.data.beatId,
+        listingId: parsed.data.listingId,
         active: true,
-        beat: { ...publicCatalogWhere, kind: "BEAT" },
+        beat: { listing: { ...publicCatalogWhere, kind: "BEAT" } },
       },
       include: {
-        beat: { include: { producer: true } },
+        beat: { include: { listing: { include: { producer: true } } } },
       },
     });
     if (!plan) throw new Error("Licence is unavailable");
-    if (plan.beat.producerId === session.user.id) throw new Error("You cannot buy your own beat");
-    if (!plan.beat.producer.payoutAccountId) throw new Error("This producer is not ready to receive payments");
+    const listing = plan.beat.listing;
+    if (listing.producerId === session.user.id) throw new Error("You cannot buy your own beat");
+    if (!listing.producer.payoutAccountId) throw new Error("This producer is not ready to receive payments");
     const artist = await tx.user.findUniqueOrThrow({ where: { id: session.user.id } });
-    if (!artist.legalName || !plan.beat.producer.legalName) throw new Error("Legal names are required before checkout");
+    if (!artist.legalName || !listing.producer.legalName) throw new Error("Legal names are required before checkout");
     const snapshot = licenseSnapshot(plan);
     const agreement = renderAgreement({
-      beatTitle: plan.beat.title,
+      beatTitle: listing.title,
       artistName: artist.legalName,
-      producerName: plan.beat.producer.legalName,
+      producerName: listing.producer.legalName,
       snapshot,
     });
     const amounts = calculateCommission(plan.price);
@@ -57,13 +58,11 @@ export async function POST(req: NextRequest) {
     const created = await tx.order.create({
       data: {
         artistId: artist.id,
-        producerId: plan.beat.producerId,
-        beatId: plan.beat.id,
-        licensePlanId: plan.id,
+        producerId: listing.producerId,
         totalAmount: plan.price,
         commission: amounts.commission,
         producerAmount: amounts.producerAmount,
-        licenseSnapshot: snapshot,
+        item: { create: { listingId: listing.id, beatLicensePlanId: plan.id, price: plan.price, currency: plan.currency, licenseSnapshot: snapshot } },
         expiresAt,
         agreement: {
           create: {
@@ -71,7 +70,7 @@ export async function POST(req: NextRequest) {
             content: agreement.content,
             contentHash: agreement.hash,
             artistLegalName: artist.legalName,
-            producerLegalName: plan.beat.producer.legalName,
+            producerLegalName: listing.producer.legalName,
             acceptedAt: new Date(),
             acceptedIp: meta.ip,
             acceptedUserAgent: meta.userAgent,
@@ -84,7 +83,7 @@ export async function POST(req: NextRequest) {
     if (plan.isExclusive) {
       const reserved = await tx.beat.updateMany({
         where: {
-          id: plan.beat.id,
+          listingId: listing.id,
           OR: [
             { exclusiveState: "AVAILABLE" },
             { exclusiveState: "RESERVED", exclusiveReservedUntil: { lt: new Date() } },
@@ -99,7 +98,7 @@ export async function POST(req: NextRequest) {
       });
       if (reserved.count !== 1) throw new Error("The exclusive licence is currently reserved or sold");
     }
-    return { ...created, payoutAccountId: plan.beat.producer.payoutAccountId };
+    return { ...created, listingId: listing.id, payoutAccountId: listing.producer.payoutAccountId };
     });
   } catch (error) {
     console.error("Checkout validation error", error);
@@ -111,7 +110,7 @@ export async function POST(req: NextRequest) {
     const providerOrder = await createRazorpayOrder({
       amountInr: order.totalAmount,
       receipt: order.id,
-      notes: { soundfuelOrderId: order.id, beatId: order.beatId },
+      notes: { soundfuelOrderId: order.id, listingId: order.listingId },
       transfer: { accountId: order.payoutAccountId, amountInr: order.producerAmount },
     });
     await prisma.order.update({ where: { id: order.id }, data: { providerOrderId: providerOrder.id } });

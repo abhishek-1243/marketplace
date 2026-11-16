@@ -40,7 +40,7 @@ try {
   const checkout = await request("/checkout/smoke-listing", { redirect: "manual" });
   assert.equal(checkout.status, 307);
   assert.ok(checkout.headers.get("location")?.endsWith("/sounds/smoke-listing"));
-  const blocked = await request("/api/beats", { method: "POST", headers: { Origin: "https://untrusted.invalid", "Content-Type": "application/json" }, body: "{}" });
+  const blocked = await request("/api/listings", { method: "POST", headers: { Origin: "https://untrusted.invalid", "Content-Type": "application/json" }, body: "{}" });
   assert.equal(blocked.status, 403, "Cross-origin listing writes must be rejected");
   console.log("Preview smoke checks passed: payment gates, static pages, checkout redirect and origin guard.");
 } finally {

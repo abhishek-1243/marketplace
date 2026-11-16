@@ -3,6 +3,7 @@
 import { Play, Pause, Music2, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import { useAudioPlayer, Track } from "@/store/audio-player";
+import { listingHref } from "@/lib/listing-kind";
 import { formatPrice } from "@/lib/utils";
 
 export interface CatalogCardItem {
@@ -14,12 +15,12 @@ export interface CatalogCardItem {
 
 export default function BeatCard({ beat }: { beat: CatalogCardItem }) {
   const { currentTrack, isPlaying, setTrack, toggle } = useAudioPlayer();
-  const playing = currentTrack?.beatId === beat.id && isPlaying;
+  const playing = currentTrack?.listingId === beat.id && isPlaying;
   const pack = beat.kind === "SOUND_PACK";
   const lowestPrice = beat.licensePlans.length ? Math.min(...beat.licensePlans.map((plan) => plan.price)) : 0;
   function play() {
-    if (currentTrack?.beatId === beat.id) { toggle(); return; }
-    const track: Track = { id: beat.id, title: beat.title, producer: beat.producer.displayName, producerUsername: beat.producer.username, coverArt: beat.coverArt || "", previewUrl: beat.previewUrl || "", price: lowestPrice, beatId: beat.id };
+    if (currentTrack?.listingId === beat.id) { toggle(); return; }
+    const track: Track = { id: beat.id, title: beat.title, producer: beat.producer.displayName, producerUsername: beat.producer.username, coverArt: beat.coverArt || "", previewUrl: beat.previewUrl || "", price: lowestPrice, listingId: beat.id, kind: beat.kind === "SOUND_PACK" ? "SOUND_PACK" : "BEAT" };
     setTrack(track);
   }
   return <article className="catalog-card group">
@@ -28,9 +29,9 @@ export default function BeatCard({ beat }: { beat: CatalogCardItem }) {
       <span className="catalog-kind">{pack ? "Sound pack" : "Beat"}</span>
       <button type="button" onClick={play} aria-label={`${playing ? "Pause" : "Play"} ${beat.title}`} aria-pressed={playing} disabled={!beat.previewUrl} className="preview-play">{playing ? <Pause className="h-4 w-4" fill="currentColor" /> : <Play className="ml-0.5 h-4 w-4" fill="currentColor" />}</button>
     </div>
-    <h3 className="catalog-title"><Link href={`/sounds/${beat.id}`} className="rounded-sm hover:text-accent-300">{beat.title}</Link></h3>
-    <Link href={`/${beat.producer.username}`} className="catalog-producer">{beat.producer.displayName}</Link>
+    <h3 className="catalog-title"><Link href={listingHref(beat)} className="rounded-sm hover:text-accent-300">{beat.title}</Link></h3>
+    <Link href={`/${beat.producer.username}?kind=${pack ? "SOUND_PACK" : "BEAT"}`} className="catalog-producer">{beat.producer.displayName}</Link>
     <div className="catalog-meta"><span>{beat.genre}</span>{!pack && beat.bpm && <span>{beat.bpm} BPM</span>}{!pack && beat.musicalKey && <span>{beat.musicalKey}</span>}</div>
-    <div className="catalog-card-footer"><span className="text-xs font-medium">{lowestPrice ? `From ${formatPrice(lowestPrice)}` : "Catalog preview"}</span><Link href={`/sounds/${beat.id}`} className="inline-flex min-h-11 items-center gap-1 rounded-md px-1 text-xs text-secondary hover:text-accent-300" aria-label={`Details for ${beat.title}`}>Details<ArrowUpRight aria-hidden="true" className="h-3.5 w-3.5" /></Link></div>
+    <div className="catalog-card-footer"><span className="text-xs font-medium">{lowestPrice ? `From ${formatPrice(lowestPrice)}` : "Catalog preview"}</span><Link href={listingHref(beat)} className="inline-flex min-h-11 items-center gap-1 rounded-md px-1 text-xs text-secondary hover:text-accent-300" aria-label={`Details for ${beat.title}`}>Details<ArrowUpRight aria-hidden="true" className="h-3.5 w-3.5" /></Link></div>
   </article>;
 }

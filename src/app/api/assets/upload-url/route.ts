@@ -14,9 +14,9 @@ export async function POST(req: NextRequest) {
   if (!session || session.user.role !== "PRODUCER") {
     return NextResponse.json({ error: "Producer account required" }, { status: 403 });
   }
-  const producer = await prisma.user.findUnique({ where: { id: session.user.id }, select: { producerStatus: true, _count: { select: { beats: true } } } });
+  const producer = await prisma.user.findUnique({ where: { id: session.user.id }, select: { producerStatus: true, _count: { select: { listings: true } } } });
   if (producer?.producerStatus !== "APPROVED") return NextResponse.json({ error: "Producer approval is required before uploading" }, { status: 403 });
-  if (producer._count.beats >= PRODUCER_CATALOG_LIMIT) return NextResponse.json({ error: "Catalog limit reached" }, { status: 409 });
+  if (producer._count.listings >= PRODUCER_CATALOG_LIMIT) return NextResponse.json({ error: "Catalog limit reached" }, { status: 409 });
   if (!storageConfigured) return NextResponse.json({ error: "Media uploads are not configured yet" }, { status: 503 });
   const parsed = uploadSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Unsupported file" }, { status: 400 });

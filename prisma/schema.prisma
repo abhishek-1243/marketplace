@@ -13,7 +13,7 @@ enum UserRole {
   ADMIN
 }
 
-enum BeatStatus {
+enum ListingStatus {
   DRAFT
   PUBLISHED
   UNPUBLISHED
@@ -57,11 +57,10 @@ enum AssetType {
   PACK
 }
 
-enum LicenseType {
+enum BeatLicenseType {
   BASIC
   PREMIUM
   EXCLUSIVE
-  SOUND_PACK
 }
 
 enum OrderStatus {
@@ -127,7 +126,7 @@ model User {
   producerReviewedAt DateTime?
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt
-  beats              Beat[]
+  listings           Listing[]
   receivedOrders     Order[]    @relation("ProducerOrders")
   orders             Order[]    @relation("ArtistOrders")
   favorites          Favorite[]
@@ -137,7 +136,7 @@ model User {
   auditLogs          AuditLog[] @relation("AuditActor")
 }
 
-model Beat {
+model Listing {
   id                     String           @id @default(cuid())
   title                  String
   kind                   CatalogKind      @default(BEAT)
@@ -145,13 +144,10 @@ model Beat {
   coverArt               String?
   genre                  String
   mood                   String?
-  bpm                    Int?
-  musicalKey             String?
   tags                   Json?
   description            String?
   region                 String?
   instruments            String?
-  sampleCount            Int?
   startingPrice          Int              @default(0)
   aiDisclosure           AiDisclosure     @default(NONE)
   rightsEvidence         String?
@@ -161,20 +157,17 @@ model Beat {
   qualityVersion         String           @default("readiness-v1")
   reviewFeedback         String?
   reviewedAt             DateTime?
-  status                 BeatStatus       @default(DRAFT)
+  status                 ListingStatus    @default(DRAFT)
   plays                  Int              @default(0)
   sampleDisclosure       SampleDisclosure @default(NO_SAMPLES)
   rightsWarrantyAt       DateTime?
-  exclusiveState         ExclusiveState   @default(AVAILABLE)
-  exclusiveOrderId       String?          @unique
-  exclusiveReservedAt    DateTime?
-  exclusiveReservedUntil DateTime?
   producerId             String
   producer               User             @relation(fields: [producerId], references: [id], onDelete: Cascade)
-  assets                 BeatAsset[]
-  licensePlans           LicensePlan[]
+  assets                 ListingAsset[]
+  beat                   Beat?
+  soundPack              SoundPack?
   favorites              Favorite[]
-  orders                 Order[]
+  orderItems             OrderItem[]
   createdAt              DateTime         @default(now())
   updatedAt              DateTime         @updatedAt
 
@@ -184,23 +177,77 @@ model Beat {
   @@index([kind, status, discoveryTier, qualityScore])
 }
 
-model BeatAsset {
+model ListingAsset {
   id          String    @id @default(cuid())
   type        AssetType
   objectKey   String
   contentType String
   sizeBytes   Int
   checksum    String?
-  beatId      String
-  beat        Beat      @relation(fields: [beatId], references: [id], onDelete: Cascade)
+  listingId   String
+  listing     Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
   createdAt   DateTime  @default(now())
 
-  @@unique([beatId, type])
+  @@unique([listingId, type])
 }
 
-model LicensePlan {
+model Beat {
+  listingId              String @id
+  listing                Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  bpm                    Int?
+  musicalKey             String?
+  exclusiveState         ExclusiveState @default(AVAILABLE)
+  exclusiveOrderId       String? @unique
+  exclusiveReservedAt    DateTime?
+  exclusiveReservedUntil DateTime?
+  licensePlans           BeatLicensePlan[]
+}
+
+model SoundPack {
+  listingId    String @id
+  listing      Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  sampleCount  Int
+  licensePlans SoundPackLicensePlan[]
+}
+
+model SoundPackLicensePlan {
+  id                    String @id @default(cuid())
+  listingId             String
+  soundPack             SoundPack @relation(fields: [listingId], references: [listingId], onDelete: Cascade)
+  price                 Int
+  currency              String @default("INR")
+  territory             String @default("WORLDWIDE")
+  commercialUse         Boolean @default(true)
+  redistributionAllowed Boolean @default(false)
+  contentIdAllowed      Boolean @default(false)
+  active                Boolean @default(true)
+  templateVersion       String @default("2026-01")
+  orderItems            OrderItem[]
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  @@unique([id, listingId])
+  @@index([listingId, active])
+}
+
+model OrderItem {
+  id                     String @id @default(cuid())
+  orderId                String @unique
+  order                  Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  listingId              String
+  listing                Listing @relation(fields: [listingId], references: [id])
+  beatLicensePlanId      String?
+  beatLicensePlan        BeatLicensePlan? @relation(fields: [beatLicensePlanId, listingId], references: [id, listingId], onDelete: Restrict)
+  soundPackLicensePlanId String?
+  soundPackLicensePlan   SoundPackLicensePlan? @relation(fields: [soundPackLicensePlanId, listingId], references: [id, listingId], onDelete: Restrict)
+  price                  Int
+  currency               String @default("INR")
+  licenseSnapshot        Json
+  @@index([listingId])
+}
+
+model BeatLicensePlan {
   id                    String      @id @default(cuid())
-  type                  LicenseType
+  type                  BeatLicenseType
   price                 Int
   currency              String      @default("INR")
   includesMp3           Boolean     @default(true)
@@ -219,25 +266,26 @@ model LicensePlan {
   isExclusive           Boolean     @default(false)
   active                Boolean     @default(true)
   templateVersion       String      @default("2026-01")
-  beatId                String
-  beat                  Beat        @relation(fields: [beatId], references: [id], onDelete: Cascade)
-  orders                Order[]
+  listingId             String
+  beat                  Beat        @relation(fields: [listingId], references: [listingId], onDelete: Cascade)
+  orderItems            OrderItem[]
   createdAt             DateTime    @default(now())
   updatedAt             DateTime    @updatedAt
 
-  @@unique([beatId, type])
-  @@index([beatId, active])
+  @@unique([listingId, type])
+  @@unique([id, listingId])
+  @@index([listingId, active])
 }
 
 model Favorite {
   id        String   @id @default(cuid())
   userId    String
-  beatId    String
+  listingId String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  beat      Beat     @relation(fields: [beatId], references: [id], onDelete: Cascade)
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 
-  @@unique([userId, beatId])
+  @@unique([userId, listingId])
 }
 
 model Follow {
@@ -258,17 +306,13 @@ model Order {
   commission      Int
   producerAmount  Int
   currency        String       @default("INR")
-  licenseSnapshot Json
   providerOrderId String?      @unique
   expiresAt       DateTime
   artistId        String
   artist          User         @relation("ArtistOrders", fields: [artistId], references: [id])
   producerId      String
   producer        User         @relation("ProducerOrders", fields: [producerId], references: [id])
-  beatId          String
-  beat            Beat         @relation(fields: [beatId], references: [id])
-  licensePlanId   String
-  licensePlan     LicensePlan  @relation(fields: [licensePlanId], references: [id])
+  item            OrderItem?
   agreement       Agreement?
   payment         Payment?
   entitlement     Entitlement?

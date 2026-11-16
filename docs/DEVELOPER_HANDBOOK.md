@@ -83,7 +83,7 @@ Browser
   |-- play preview --> preview API --> short-lived S3 GET redirect
 ```
 
-Server pages often query Prisma directly. They do not all fetch `/api/beats`. When changing discovery behavior, use the shared catalog query helpers so home, search and APIs remain consistent.
+Server pages often query Prisma directly. They do not all fetch `/api/listings`. When changing discovery behavior, use the shared catalog query helpers so home, search and APIs remain consistent.
 
 Files without a `"use client"` directive in the App Router are normally server components. Interactive forms, navigation and playback use client components. Database access, AWS credentials and auth configuration must stay on the server. Sensitive integration modules use `import "server-only"` to prevent accidental client imports.
 
@@ -127,7 +127,7 @@ marketplace/
       admin/                    Catalog operations and approval controls
       api/                      Backend routes grouped by domain
       apply/                    Producer application flow
-      checkout/[beatId]/        Guarded legacy checkout flow
+      checkout/[listingId]/        Guarded legacy checkout flow
       contact/                  Support contact information
       copyright/                Rights complaint instructions
       dashboard/                Producer studio and metadata editor
@@ -154,7 +154,7 @@ marketplace/
     types/next-auth.d.ts         Additional session and JWT fields
 ```
 
-Square brackets denote URL parameters. `[username]` is a root-level catch-all segment for a single username, not a folder to rename for each producer. `[soundId]` and `[beatId]` normally refer to the same `Beat.id`; the table name remains `Beat` even for sound packs. Identifiers are Prisma CUIDs. `slug` is a stored human-readable value, but public detail routes currently use the ID.
+Square brackets denote URL parameters. `[username]` is a root-level catch-all segment for a single username, not a folder to rename for each producer. `[listingId]` refers to `Listing.id`. Separate `/beats/[listingId]` and `/sound-packs/[listingId]` routes enforce the product kind. `/sounds/[soundId]` is a legacy redirect. Shared metadata lives in `Listing`; subtype metadata lives in `Beat` or `SoundPack`, and each has separate licence plans. Identifiers are Prisma CUIDs. `slug` is a stored human-readable value, but public detail routes currently use the ID.
 
 `page.tsx` renders a page, `layout.tsx` wraps a route subtree and `route.ts` handles HTTP requests. There is no central Express router or global authorization middleware: relevant pages and handlers perform their own checks. Dynamic route parameters use the asynchronous `params` convention in this codebase.
 
@@ -176,7 +176,9 @@ All page paths below are relative to `src/app/`.
 | --- | --- | --- |
 | `/` | `page.tsx` | Server queries for featured listings, beats and packs; genre links and application CTA |
 | `/search` | `search/page.tsx` | Curated server-side search, filters, sorting, totals and 24-item pages |
-| `/sounds/[soundId]` | `sounds/[soundId]/page.tsx` | Public listing, producer link, declarations, preview, saves and indicative pricing |
+| `/beats/[listingId]` | `beats/[listingId]/page.tsx` | Beat-only details, preview, saves and indicative beat licence pricing |
+| `/sound-packs/[listingId]` | `sound-packs/[listingId]/page.tsx` | Pack-only details, preview, saves and indicative pack pricing |
+| `/sounds/[soundId]` | `sounds/[soundId]/page.tsx` | Legacy redirect to the matching product detail |
 | `/[username]` | `[username]/page.tsx` | Approved producer only; publicly eligible listings, follows and social links |
 | `/login` | `login/page.tsx` | Google sign-in; no password login |
 | `/register` | `register/page.tsx` | Artist or producer intent passed into onboarding after Google sign-in |
@@ -187,7 +189,7 @@ All page paths below are relative to `src/app/`.
 | `/dashboard/settings` | `dashboard/settings/page.tsx` | Authenticated user's profile form; page is not limited to the producer role |
 | `/library` | `library/page.tsx` | Authenticated user's latest 100 publicly eligible saved sounds and existing paid entitlements |
 | `/admin` | `admin/page.tsx` | Admin-only producer and catalog review; queues use 20-item pages |
-| `/checkout/[beatId]` | `checkout/[beatId]/page.tsx` | Redirects to listing details while payments are off |
+| `/checkout/[listingId]` | `checkout/[listingId]/page.tsx` | Redirects to listing details while payments are off |
 | Policy routes | Their respective `page.tsx` files | Contact, copyright, delivery, privacy, refund and terms copy |
 
 `search/SearchResults.tsx`, `[username]/StorefrontBeats.tsx` and `library/LibraryBeatRow.tsx` handle interactive rendering for their server parents. `StorefrontActions.tsx` handles follows. `dashboard/EditListingForm.tsx` edits allowed metadata. `SettingsForm.tsx` uploads images and saves the current user's profile.
@@ -210,7 +212,7 @@ Admin controls are split by responsibility: `ProducerAccessAction.tsx` changes a
 
 `app/layout.tsx` wraps navigation, content, footer and player in the session provider. This keeps the audio component mounted across client navigation. `src/store/audio-player.ts` holds the current track, playing flag, duration, progress, volume and queue. It is in-memory state, not database storage or a persisted listening history; a full refresh resets it. `setTrack` selects a single-track queue, while `setQueue` can start a multi-track queue. Components using a card do not automatically create a playlist.
 
-The player requests `/api/beats/[beatId]/preview`, not a master object. It uses `preload="none"`; playback failure pauses the UI and shows feedback. The preview endpoint does not increment `Beat.plays`, because requesting a URL is not a verified listen. Do not treat that legacy field as reliable analytics.
+The player requests `/api/listings/[listingId]/preview`, not a master object. It uses `preload="none"`; playback failure pauses the UI and shows feedback. The preview endpoint does not increment `Listing.plays`, because requesting a URL is not a verified listen. Do not treat that legacy field as reliable analytics.
 
 ## 6 Backend modules
 
@@ -245,10 +247,14 @@ All paths in this table are under `src/lib/`.
 | Model | Purpose and important constraints |
 | --- | --- |
 | `User` | Unique email and username; role, onboarding, producer approval, public profile and private legal/application data |
-| `Beat` | Both beats and packs via `kind`; owner, metadata, status, rights, editorial tier, internal readiness and dormant exclusive-sale state |
-| `BeatAsset` | S3 key, type, declared MIME, verified size and optional checksum; unique `(beatId, type)` |
-| `LicensePlan` | Indicative price and stored beat rights/file flags; unique `(beatId, type)` |
-| `Favorite` | User-to-listing save; unique `(userId, beatId)` |
+| `Listing` | Shared identity, owner, metadata, kind, publication, rights, editorial tier and internal readiness |
+| `Beat` | One-to-one beat details: BPM/key and dormant exclusive-sale state |
+| `SoundPack` | One-to-one pack details: positive sample count |
+| `ListingAsset` | S3 key, type, declared MIME, verified size and optional checksum; unique `(listingId, type)` |
+| `BeatLicensePlan` | Indicative price and stored beat rights/file flags; unique `(listingId, type)` |
+| `SoundPackLicensePlan` | Pack pricing and independent commercial-use/redistribution rights |
+| `OrderItem` | Purchased listing, price and immutable licence snapshot; exactly one matching licence |
+| `Favorite` | User-to-listing save; unique `(userId, listingId)` |
 | `Follow` | Follower-to-producer relationship; unique `(followerId, followingId)` |
 | `Order` | Dormant purchase ledger linking artist, producer, listing and plan; price split and immutable snapshot |
 | `Agreement` | One per order; acceptance metadata, content, content hash and template version |
@@ -260,13 +266,14 @@ All paths in this table are under `src/lib/`.
 | `AuditLog` | Actor, action, entity and optional before/after metadata |
 
 ```text
-User --owns--> Beat --has--> BeatAsset
-                  |--has--> LicensePlan
-User --saves-----> Beat
+User --owns--> Listing --has--> ListingAsset
+                  |--kind BEAT--> Beat --> BeatLicensePlan
+                  |--kind SOUND_PACK--> SoundPack --> SoundPackLicensePlan
+User --saves-----> Listing
 User --follows--> User
 
 Future commerce
-Order --> artist User, producer User, Beat and LicensePlan
+Order --> artist User, producer User, OrderItem --> Listing and type-specific licence
   |--> Agreement
   |--> Payment
   |--> Entitlement
@@ -276,7 +283,7 @@ PaymentEvent stores provider event IDs separately
 AuditLog records selected administrative and order actions
 ```
 
-`User.role` and `User.producerStatus` answer different questions. The legacy `User.verified` flag is not a replacement for `producerStatus = APPROVED`. Prices are whole INR integers; Razorpay conversion to paise happens at the provider boundary. A stored `LicensePlan` is not evidence that someone purchased or accepted it.
+`User.role` and `User.producerStatus` answer different questions. The legacy `User.verified` flag is not a replacement for `producerStatus = APPROVED`. Prices are whole INR integers; Razorpay conversion to paise happens at the provider boundary. A stored `BeatLicensePlan` is not evidence that someone purchased or accepted it.
 
 Some relationships have cascading deletes, while transaction relationships preserve references. There is no account-deletion workflow implementing retention or order preservation. Do not delete users/listings directly in production without reviewing dependent records and retention requirements.
 
@@ -315,7 +322,7 @@ Suspension changes public eligibility without deleting files or resetting all li
 3. The handler checks session role, current database approval, catalog count, storage configuration and slot rules. It generates a random owner-prefixed key and a signed PUT URL valid for ten minutes.
 4. The browser uploads directly to S3 with the declared content type, `x-amz-server-side-encryption: AES256` and `if-none-match: *`. Conditional PUT prevents overwriting an existing object through that URL.
 5. Optional artwork goes through `POST /api/upload` as multipart form data. The server accepts JPEG, PNG or WebP up to 5 MiB and stores it under `profile/`. This route needs both S3 and the artwork CDN URL.
-6. The form submits metadata, declarations, prices and the returned object keys to `POST /api/beats`.
+6. The form submits metadata, declarations, prices and the returned object keys to `POST /api/listings`.
 7. The handler checks legal name and approval, validates the complete listing, verifies ownership prefixes and performs S3 HEAD requests for stored MIME, size and encryption.
 8. A database transaction rechecks approval, locks the producer row through an update, checks the 100-listing limit and creates the listing, assets and plans together.
 9. The response contains the new ID and status fields. The browser returns to the producer dashboard.
@@ -350,7 +357,7 @@ Admin resolves rights and publication
 
 ### Preview access
 
-`GET /api/beats/[beatId]/preview` permits public eligible listings, the listing owner or an admin. It selects only the `PREVIEW` key and issues a five-minute S3 GET redirect with a no-store response. It never substitutes a master when a preview is missing. Signed links are bearer links until expiry; suspension prevents new public links but does not revoke already-issued links immediately.
+`GET /api/listings/[listingId]/preview` permits public eligible listings, the listing owner or an admin. It selects only the `PREVIEW` key and issues a five-minute S3 GET redirect with a no-store response. It never substitutes a master when a preview is missing. Signed links are bearer links until expiry; suspension prevents new public links but does not revoke already-issued links immediately.
 
 ## 10 Discovery and readiness scoring
 
@@ -418,18 +425,18 @@ Handlers live beneath `src/app/api/`. Bodies are JSON unless stated otherwise. N
 | GET/POST `/api/auth/[...nextauth]` | NextAuth provider callbacks, sign-in/out and session handling |
 | POST `/api/onboarding` | Signed-in user with incomplete onboarding; identity, role and terms |
 | POST `/api/producer-application` | Onboarded artist; applies to become a producer |
-| GET `/api/beats` | Public curated discovery; `q`, `kind`, `genre`, `sort`, `page` |
-| POST `/api/beats` | Approved producer with legal name; verifies files and creates listing |
-| PATCH `/api/beats/[beatId]` | Approved owner; strict metadata update and discovery reset |
-| GET `/api/beats/[beatId]/preview` | Public eligibility or private owner/admin permission; signed preview redirect |
+| GET `/api/listings` | Public curated discovery; `q`, `kind`, `genre`, `sort`, `page` |
+| POST `/api/listings` | Approved producer with legal name; verifies files and creates listing |
+| PATCH `/api/listings/[listingId]` | Approved owner; strict metadata update and discovery reset |
+| GET `/api/listings/[listingId]/preview` | Public eligibility or private owner/admin permission; signed preview redirect |
 | POST `/api/assets/upload-url` | Approved producer; returns private audio/ZIP PUT URL and key |
 | POST `/api/upload` | Authenticated user; multipart field `file` for artwork/profile image |
-| POST `/api/favorites` | Authenticated user; `{ beatId }` toggles a public eligible listing save |
+| POST `/api/favorites` | Authenticated user; `{ listingId }` toggles a public eligible listing save |
 | POST `/api/follow` | Authenticated user; `{ userId }` toggles following an approved producer; self-follow blocked |
 | GET `/api/user/profile` | Authenticated user; own profile and private account fields |
 | PATCH `/api/user/profile` | Authenticated user; profile allowlist, not role/approval changes |
 | PATCH `/api/admin/users/[userId]/producer-status` | Admin; `{ producerStatus }` and audit record |
-| PATCH `/api/admin/beats/[beatId]` | Admin; publication, rights, discovery and feedback |
+| PATCH `/api/admin/listings/[listingId]` | Admin; publication, rights, discovery and feedback |
 | PATCH `/api/admin/users/[userId]/payout-account` | Disabled with `503 PAYMENTS_DISABLED`; future admin linked-account configuration |
 | POST `/api/checkout` | Disabled with `503 PAYMENTS_DISABLED`; dormant order creation |
 | POST `/api/payments/verify` | Disabled with `503 PAYMENTS_DISABLED`; dormant payment signature path |

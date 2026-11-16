@@ -8,7 +8,8 @@ export interface Track {
   coverArt: string;
   previewUrl: string;
   price: number;
-  beatId: string;
+  listingId: string;
+  kind?: "BEAT" | "SOUND_PACK";
 }
 
 interface AudioPlayerState {

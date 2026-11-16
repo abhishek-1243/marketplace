@@ -13,7 +13,7 @@ export interface LandingSection {
 
 export default function LandingPage({ sections, heroSounds, beforeCatalog, afterCatalog, emptyCatalog }: { sections: LandingSection[]; heroSounds?: CatalogCardItem[]; beforeCatalog?: ReactNode; afterCatalog?: ReactNode; emptyCatalog?: ReactNode }) {
   const visibleSections = sections.filter((section) => section.items.length);
-  const sounds = Array.from(new Map((heroSounds ?? sections.flatMap((section) => section.items)).map((item) => [item.id, item])).values()).slice(0, 4);
+  const sounds = Array.from(new Map((heroSounds ?? sections.flatMap((section) => section.items).filter((item) => item.kind !== "SOUND_PACK")).map((item) => [item.id, item])).values()).slice(0, 4);
   return <div className="landing-page">
     <section className="landing-hero" aria-labelledby="landing-title">
       <div className="landing-container landing-hero-grid">
@@ -21,8 +21,8 @@ export default function LandingPage({ sections, heroSounds, beforeCatalog, after
           <h1 id="landing-title">Start with<br />a sound.</h1>
           <p className="landing-intro">Beats and original recordings from independent Indian producers. Find the starting point for your next track.</p>
           <div className="landing-actions">
-            <Link href="/search" className="soundfuel-button">Explore sounds</Link>
-            <Link href="/search?kind=SOUND_PACK" className="soundfuel-button-secondary">Sound packs</Link>
+            <Link href="/beats" className="soundfuel-button">Explore beats</Link>
+            <Link href="/sound-packs" className="soundfuel-button-secondary">Sound packs</Link>
           </div>
           <p className="landing-preview-note">Listen and save favourites. Purchases are not open yet.</p>
         </div>
@@ -32,7 +32,7 @@ export default function LandingPage({ sections, heroSounds, beforeCatalog, after
     <div id="landing-catalog" className="landing-container landing-content scroll-mt-24">
       {beforeCatalog}
       {visibleSections.length ? visibleSections.map((section, index) => <section className="landing-collection" key={section.href} aria-labelledby={`collection-${index}`}>
-        <div className="landing-section-heading"><div><h2 id={`collection-${index}`}>{section.title}</h2><p>{section.subtitle}</p></div><Link href={section.href} className="landing-text-link">Explore all sounds</Link></div>
+        <div className="landing-section-heading"><div><h2 id={`collection-${index}`}>{section.title}</h2><p>{section.subtitle}</p></div><Link href={section.href} className="landing-text-link">{section.href.startsWith("/sound-packs") ? "Explore sound packs" : "Explore beats"}</Link></div>
         <HomeBeats beats={section.items} />
       </section>) : <section className="landing-collection" aria-labelledby="founding-title"><div className="landing-section-heading"><div><h2 id="founding-title">The collection</h2><p>Beats and original sound packs selected for Soundfuel.</p></div><Link href="/search" className="landing-text-link">Explore all sounds</Link></div>{emptyCatalog || <HomeBeats beats={[]} />}</section>}
       {afterCatalog}

@@ -16,16 +16,17 @@ export async function GET(req: NextRequest, context: { params: Promise<{ orderId
   }
   const order = await prisma.order.findFirst({
     where: { id: orderId, artistId: session.user.id, status: "PAID", entitlement: { active: true } },
-    include: { licensePlan: true, beat: { include: { assets: true } } },
+    include: { item: { include: { beatLicensePlan: true, listing: { include: { assets: true } } } } },
   });
-  if (!order) return NextResponse.json({ error: "Purchase not found" }, { status: 404 });
+  if (!order?.item?.beatLicensePlan || order.item.listing.kind !== "BEAT") return NextResponse.json({ error: "Purchase not found" }, { status: 404 });
+  const licensePlan = order.item.beatLicensePlan;
   const permitted = assetType === "MP3"
-    ? order.licensePlan.includesMp3
+    ? licensePlan.includesMp3
     : assetType === "WAV"
-      ? order.licensePlan.includesWav
-      : order.licensePlan.includesStems;
+      ? licensePlan.includesWav
+      : licensePlan.includesStems;
   if (!permitted) return NextResponse.json({ error: "Asset not included in this licence" }, { status: 403 });
-  const asset = order.beat.assets.find((item) => item.type === assetType);
+  const asset = order.item.listing.assets.find((item) => item.type === assetType);
   if (!asset) return NextResponse.json({ error: "Asset unavailable" }, { status: 404 });
   const meta = requestMetadata(req);
   await prisma.download.create({
@@ -33,7 +34,7 @@ export async function GET(req: NextRequest, context: { params: Promise<{ orderId
   });
   const extension = assetType === "STEMS" ? "zip" : assetType.toLowerCase();
   return NextResponse.redirect(
-    await createPresignedDownload(asset.objectKey, `${order.beat.slug}-${assetType.toLowerCase()}.${extension}`),
+    await createPresignedDownload(asset.objectKey, `${order.item.listing.slug}-${assetType.toLowerCase()}.${extension}`),
     307,
   );
 }

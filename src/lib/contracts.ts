@@ -1,7 +1,7 @@
 import { createHash } from "crypto";
-import { LicensePlan } from "@prisma/client";
+import { BeatLicensePlan } from "@prisma/client";
 
-export function licenseSnapshot(plan: LicensePlan) {
+export function licenseSnapshot(plan: BeatLicensePlan) {
   return {
     type: plan.type,
     price: plan.price,

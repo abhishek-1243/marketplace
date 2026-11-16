@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { formatNumber } from "@/lib/utils";
 import { getServerSession } from "next-auth";
@@ -6,20 +7,23 @@ import { authOptions } from "@/lib/auth";
 import StorefrontBeats from "./StorefrontBeats";
 import StorefrontActions from "./StorefrontActions";
 import { catalogSelect, publicCatalogWhere, serializeCatalogItem } from "@/lib/catalog";
+import { catalogKind } from "@/lib/listing-kind";
 
 export const dynamic = "force-dynamic";
 
 export default async function ProducerStorefront({
-  params,
+  params, searchParams,
 }: {
   params: Promise<{ username: string }>;
+  searchParams: Promise<{ kind?: string }>;
 }) {
   const { username } = await params;
+  const kind = catalogKind((await searchParams).kind);
   const producer = await prisma.user.findUnique({
     where: { username },
     include: {
-      beats: {
-        where: publicCatalogWhere,
+      listings: {
+        where: { ...publicCatalogWhere, kind },
         select: catalogSelect,
         orderBy: { createdAt: "desc" },
         take: 100,
@@ -56,7 +60,7 @@ export default async function ProducerStorefront({
         <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent" />
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 -mt-16 relative z-10">
+      <div className="site-shell -mt-16 relative z-10">
         <div className="flex flex-col sm:flex-row items-start gap-5">
           <div className="w-[180px] h-[180px] rounded-xl bg-raised overflow-hidden shadow-2xl shrink-0">
             {producer.profileImage ? (
@@ -88,7 +92,7 @@ export default async function ProducerStorefront({
             <div className="flex items-center gap-4 mt-3 text-[13px] text-muted">
               <span>{formatNumber(producer._count.followers)} followers</span>
               <span className="w-1 h-1 rounded-full bg-zinc-700" />
-              <span>{producer.beats.length} sounds</span>
+              <span>{producer.listings.length} {kind === "BEAT" ? "beats" : "sound packs"}</span>
             </div>
 
             <div className="mt-4">
@@ -102,10 +106,11 @@ export default async function ProducerStorefront({
         </div>
 
         <div className="mt-10">
-          <h2 className="text-base font-semibold mb-2">Beats & sound packs</h2>
+          <nav aria-label="Storefront product type" className="mb-5 flex gap-3"><Link href={`/${producer.username}?kind=BEAT`} className="filter-chip" aria-current={kind === "BEAT" ? "page" : undefined}>Beats</Link><Link href={`/${producer.username}?kind=SOUND_PACK`} className="filter-chip" aria-current={kind === "SOUND_PACK" ? "page" : undefined}>Sound packs</Link></nav>
+          <h2 className="text-base font-semibold mb-2">{kind === "BEAT" ? "Beats" : "Sound packs"}</h2>
           <p className="mb-4 text-xs text-muted">Creator storefront · Catalog preview · Purchases opening later</p>
           <StorefrontBeats
-            beats={producer.beats.map(serializeCatalogItem)}
+            beats={producer.listings.map(serializeCatalogItem)}
           />
         </div>
 

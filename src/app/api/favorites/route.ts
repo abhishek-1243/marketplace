@@ -6,7 +6,7 @@ import { sameOrigin } from "@/lib/request";
 import { z } from "zod";
 import { publicCatalogWhere } from "@/lib/catalog";
 
-const schema = z.object({ beatId: z.string().cuid() }).strict();
+const schema = z.object({ listingId: z.string().cuid() }).strict();
 
 export async function POST(req: NextRequest) {
   if (!sameOrigin(req)) return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
@@ -16,15 +16,15 @@ export async function POST(req: NextRequest) {
   }
 
   const parsed = schema.safeParse(await req.json());
-  if (!parsed.success) return NextResponse.json({ error: "Invalid beat" }, { status: 400 });
-  const { beatId } = parsed.data;
+  if (!parsed.success) return NextResponse.json({ error: "Invalid listing" }, { status: 400 });
+  const { listingId } = parsed.data;
   const userId = session.user.id;
 
-  const beat = await prisma.beat.findFirst({ where: { id: beatId, ...publicCatalogWhere }, select: { id: true } });
-  if (!beat) return NextResponse.json({ error: "Beat not found" }, { status: 404 });
+  const beat = await prisma.listing.findFirst({ where: { id: listingId, ...publicCatalogWhere }, select: { id: true } });
+  if (!beat) return NextResponse.json({ error: "Listing not found" }, { status: 404 });
 
   const existing = await prisma.favorite.findUnique({
-    where: { userId_beatId: { userId, beatId } },
+    where: { userId_listingId: { userId, listingId } },
   });
 
   if (existing) {
@@ -32,6 +32,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ favorited: false });
   }
 
-  await prisma.favorite.create({ data: { userId, beatId } });
+  await prisma.favorite.create({ data: { userId, listingId } });
   return NextResponse.json({ favorited: true });
 }

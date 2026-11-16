@@ -33,6 +33,8 @@ export const listingSchema = z.object({
   exclusivePrice: z.number().int().min(499).max(10000000).optional(),
   assets: z.array(z.object({ type: z.enum(assetTypes), objectKey: z.string().min(10).max(400) }).strict()).min(2).max(4),
 }).strict().superRefine((input, ctx) => {
+  if (input.kind === "SOUND_PACK" && (input.bpm !== undefined || input.musicalKey !== undefined || input.premiumPrice !== undefined || input.exclusivePrice !== undefined)) ctx.addIssue({ code: "custom", path: ["kind"], message: "Sound packs cannot contain beat-only metadata or licence tiers" });
+  if (input.kind === "BEAT" && input.sampleCount !== undefined) ctx.addIssue({ code: "custom", path: ["sampleCount"], message: "Sample count belongs to sound packs" });
   const types = input.assets.map((asset) => asset.type);
   if (new Set(types).size !== types.length || !types.includes("PREVIEW")) ctx.addIssue({ code: "custom", path: ["assets"], message: "Include one preview and no duplicate file slots" });
   if (input.kind === "SOUND_PACK" && (!types.includes("PACK") || types.some((type) => !["PACK", "PREVIEW"].includes(type)) || !input.sampleCount)) ctx.addIssue({ code: "custom", path: ["assets"], message: "Sound packs require a preview, ZIP and sample count" });

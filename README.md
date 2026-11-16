@@ -43,6 +43,8 @@ Google must allow `https://YOUR_DOMAIN/api/auth/callback/google` (and the localh
 
 Set `ADMIN_EMAIL` and run `npm run db:seed` to bootstrap the administrator, then sign in with that Google account. The seed does not create fake catalog inventory.
 
+Purchase email uses `AWS_SES_FROM_EMAIL` (for example, `orders@soundfuel.in`) with the display name **Soundfuel Orders** and sets `Reply-To` to `NEXT_PUBLIC_SUPPORT_EMAIL` (for example, `support@soundfuel.in`). Keep the sender verified in SES and configure the support inbox/alias in Google Workspace. Workspace handles incoming replies; the app continues sending through SES and needs no Workspace password or SMTP configuration. Add an `orders` alias as well if you want to receive messages addressed directly to the sender. Rebuild when changing the public support email. Purchase emails remain disabled while commerce is disabled; configuring email does not activate checkout.
+
 ## AWS media
 
 Prefer an attached IAM role over long-lived access keys. Use least-privilege `s3:PutObject` and `s3:GetObject` on the intended media prefixes (`GetObject` also authorizes `HeadObject`). Enable S3 Block Public Access, default encryption and a lifecycle policy for abandoned uploads. Bucket CORS:
@@ -65,9 +67,11 @@ If using CloudFront, expose `/profile/*` only through an origin access control; 
 
 ## Deploy
 
-1. Back up an existing database. Run `npm ci`, `npm run db:generate`, `npm run db:deploy` as a release step. The new additive migration deliberately makes existing producer accounts pending and existing listings require rights review. Approve/review them before they become visible again.
+For the separated listing/beat/sound-pack schema and exact Railway upgrade steps, see [docs/CATALOG_DATABASE.md](docs/CATALOG_DATABASE.md). The new migration requires empty product/order tables and preserves user accounts. `railway.json` configures migrations as a pre-deploy step; no database reset is needed.
+
+1. Keep the existing database and migration history. Run `npm ci` and `npm run db:generate` during the build; run `prisma migrate deploy` as the pre-deploy step. The catalog-split migration requires empty product/order tables, refuses unexpected records and preserves users. Do not reset the Railway database.
 2. Configure production secrets in the host, with both commerce switches false. Leave Razorpay and SES credentials empty.
-3. Build/start normally, or build the Docker image with `--build-arg NEXT_PUBLIC_SUPPORT_EMAIL=YOUR_WORKING_EMAIL`. Supply actual runtime environment variables; the Docker build placeholders are not production credentials. Run migrations from the source release job, not the minimal runner image.
+3. Build/start normally, or build the Docker image with `--build-arg NEXT_PUBLIC_SUPPORT_EMAIL=YOUR_WORKING_EMAIL`. Supply actual runtime environment variables; the Docker build placeholders are not production credentials. The Docker runner includes the Prisma migration CLI for the Railway pre-deploy command.
 4. Use `/api/health` for liveness and `/api/ready` for database readiness. Readiness checks the database, not OAuth/S3 permissions.
 5. Configure HTTPS, managed rate limits/WAF (auth, upload, preview and mutation endpoints), database backups, monitoring and restricted admin access. This app has no distributed rate limiter or malware scanner built in.
 6. Complete the manual acceptance checklist in [docs/MVP.md](docs/MVP.md). Review policies with counsel before public launch.

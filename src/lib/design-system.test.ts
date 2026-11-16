@@ -96,15 +96,15 @@ test("the redesign uses a licensed local font without external font requests", (
 
 test("trending hero only queries eligible playable marketplace sounds and shares playback", () => {
   const home = readFileSync("src/app/page.tsx", "utf8");
-  assert.match(home, /\.\.\.marketplaceWhere, assets: \{ some: \{ type: "PREVIEW"/);
+  assert.match(home, /\.\.\.marketplaceWhere, kind: "BEAT", assets: \{ some: \{ type: "PREVIEW"/);
   assert.match(home, /orderBy: \[\{ plays: "desc" \}, \{ createdAt: "desc" \}, \{ id: "desc" \}\]/);
   assert.match(home, /heroSounds=\{trending.map\(serializeCatalogItem\)\}/);
   const trending = readFileSync("src/components/home/TrendingSounds.tsx", "utf8");
-  assert.match(trending, /Trending<\/h2>/);
+  assert.match(trending, /Trending beats<\/h2>/);
   assert.match(trending, /Ranked by total plays/);
   assert.match(trending, /useAudioPlayer/);
   assert.match(trending, /setQueue\(playable.map\(toTrack\)/);
-  assert.match(trending, /currentTrack\?\.beatId === sound.id\) \{ toggle\(\)/);
+  assert.match(trending, /currentTrack\?\.listingId === sound.id\) \{ toggle\(\)/);
   assert.match(trending, /disabled=\{!sound.previewUrl\}/);
   assert.match(trending, /role="status"/);
   assert.doesNotMatch(trending, /<audio|autoPlay|setInterval/);

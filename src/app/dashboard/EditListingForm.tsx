@@ -13,7 +13,7 @@ export default function EditListingForm({ item }: { item: Listing }) {
   async function save(event: React.FormEvent) {
     event.preventDefault(); setBusy(true); setMessage("");
     try {
-      const response = await fetch(`/api/beats/${item.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...form, tags: form.tags.split(",").map((tag) => tag.trim()).filter(Boolean) }) });
+      const response = await fetch(`/api/listings/${item.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...form, tags: form.tags.split(",").map((tag) => tag.trim()).filter(Boolean) }) });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Could not save changes");
       setMessage("Saved. Marketplace selection resets after edits; rights restrictions stay in place."); router.refresh();
